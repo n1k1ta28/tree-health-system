@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apie - Miškoris</title>
+    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <h1>Miškoris</h1>
+    </div>
+    <div class="header-right">
+        <a href="{% url 'home' %}">Pagrindinis</a>
+        <a href="{% url 'about' %}">Apie</a>
+    </div>
+</header>
+
+<section>
+    <h2>Mūsų tikslas</h2>
+    <p>Mūsų tikslas yra palengvinti miško savininkų gyvenimus, padedant jiems greitai aptikti blogus medžius</p>
+
+    <h2>Mūsų paslaugos</h2>
+    <p>.....</p>
+    <h2>Mūsų komanda</h2>
+    <p>......</p>
+</section>
+
+<footer>
+    <p>&copy; 2025 Miškoris.</p>
+</footer>
+
+</body>
+</html>
