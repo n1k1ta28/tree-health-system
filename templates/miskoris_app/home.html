@@ -1,33 +1,13 @@
+
+{% extends 'miskoris_app/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Miškoris</title>
-    <link rel="stylesheet" type="text/css" href="{% static 'css/styles.css' %}">
-    <!-- Bootstrap Icons CDN -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-</head>
-<body>
 
-<header>
-    <div class="header-left">
-        <h1>Miškoris</h1>
-    </div>
-    <div class="header-right">
-        <a href="{% url 'home' %}">Pagrindinis</a>
-        <a href="{% url 'about' %}">Apie</a>
-    </div>
+{% block title %}Miškoris{% endblock %}
 
-</header>
-<section>
-    <h2>Random tekstas</h2>
-
-</section>
-<footer>
-    <p>&copy; 2025 Miškoris.</p>
-</footer>
-
-</body>
-</html>
+{% block content %}
+<div class="background">
+    <section class="text-container">
+        <h2>Sveiki atvykę į miškorį!</h2>
+    </section>
+</div>
+{% endblock %}

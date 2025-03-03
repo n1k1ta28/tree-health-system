@@ -1,0 +1,11 @@
+{% extends 'miskoris_app/base.html' %}
+{% load static %}
+
+{% block title %}Registracija{% endblock %}
+
+{% block content %}
+<div style="min-height: 100vh;">
+    <h2>Registracija</h2>
+    <p>Jau turite paskyrą? <a href="{% url 'login' %}">Prisijungti</a></p>
+</div>
+{% endblock %}

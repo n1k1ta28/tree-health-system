@@ -1,0 +1,11 @@
+{% extends 'miskoris_app/base.html' %}
+{% load static %}
+
+{% block title %}Prisijungimas{% endblock %}
+
+{% block content %}
+<div style="min-height: 100vh;">
+    <h2>Prisijungimas</h2>
+    <p>Neturite paskyros? <a href="{% url 'register' %}">Registruotis</a></p>
+</div>
+{% endblock %}
