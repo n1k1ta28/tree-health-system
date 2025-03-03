@@ -1,5 +1,5 @@
 body {
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     background-color: #f4f4f4;
     color: #333;
     margin: 0;
@@ -19,6 +19,7 @@ body {
     align-items: center;
     color: white; /* Adjust text color for visibility */
     text-align: center;
+    
 }
 header {
     display: flex;
@@ -69,4 +70,46 @@ footer {
     padding: 40px;
     border-radius: 20px;
     color: white; /* Text color for contrast */
+}
+
+/* Sidebar Styles */
+.sidebar {
+    width: 200px;
+    background: rgba(255, 255, 255, 0.8); /* Semi-transparent black */
+    color: white;
+    padding: 20px;
+    min-height: calc(100vh - 60px);
+}
+
+.sidebar a {
+    display: block;
+    color: rgb(0, 0, 0);
+    padding: 10px;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn {
+    display: inline-block;
+    background-color: #217e27;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 16px;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background-color: #195f1e;
+}
+
+.icon-large {
+    font-size: 24px; /* Adjust the size as needed */
+    padding: 5px;
 }

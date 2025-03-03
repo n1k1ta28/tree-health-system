@@ -1,0 +1,17 @@
+{% extends "miskoris_app/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="main-container">
+    <div class="sidebar">
+        <a href="{% url 'forests' %}"> <i class="fa-solid fa-tree icon-large"></i> Mano miškai</a>
+        <a href="{% url 'home' %}"><i class="fa-solid fa-image icon-large"></i>  Galerija</a>
+        <a href="{% url 'home' %}"><i class="fa-solid fa-map icon-large"></i> Žemėlapis</a>
+        <a href="{% url 'home' %}"><i class="fa-solid fa-folder icon-large"></i> Dokumentai</a>
+    </div>
+
+    <div class="content">
+        {% block sidebar_content %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

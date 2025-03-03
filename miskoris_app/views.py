@@ -14,3 +14,6 @@ def login(request):
 
 def register(request):
     return render(request, "miskoris_app/register.html")
+
+def forests(request):
+    return render(request, "miskoris_app/forests.html")
