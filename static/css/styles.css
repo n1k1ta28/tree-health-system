@@ -72,6 +72,11 @@ footer {
     color: white; /* Text color for contrast */
 }
 
+/* Main container to align sidebar and content horizontally */
+.main-container {
+    display: flex; /* Enables flexbox */
+    min-height: 100vh; /* Full height */
+}
 /* Sidebar Styles */
 .sidebar {
     width: 200px;
@@ -93,6 +98,12 @@ footer {
     background: rgba(255, 255, 255, 0.2);
 }
 
+/* Content area (beside sidebar) */
+.content {
+    margin-left: 10px;
+    flex-grow: 1;
+    padding: 20px;
+}
 .btn {
     display: inline-block;
     background-color: #217e27;

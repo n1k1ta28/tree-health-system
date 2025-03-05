@@ -1,0 +1,22 @@
+{% extends 'miskoris_app/sidebar.html' %}
+
+{% block title %}Nuotraukos{% endblock %}
+
+{% block sidebar_content %}
+    <h2>Įkelkite norimą nuotrauką</h2>
+    
+    <form method="post" enctype="multipart/form-data" action="{% url 'image_upload' %}">
+        <input type="file" name="image" accept=".jpeg, .png" required>
+        <button type="submit">Įkelti</button>
+    </form>
+    {% if messages %}
+    {% for message in messages %}
+        <p style="color: red;">{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+
+    {% if uploaded_file_url %}
+        <h3>Nuotrauka įkelta</h3>
+        
+    {% endif %}
+{% endblock %}

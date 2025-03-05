@@ -1,5 +1,6 @@
 ﻿from django.shortcuts import render
 from django.http import HttpResponse
+from django.core.files.storage import FileSystemStorage
 
 # Create your views here.
 
@@ -17,3 +18,24 @@ def register(request):
 
 def forests(request):
     return render(request, "miskoris_app/forests.html")
+
+def photos(request):
+    return render(request, "miskoris_app/photos.html")
+
+def image_upload(request):
+    if request.method == 'POST' and request.FILES.get('image'):
+        image = request.FILES['image']
+        
+        # Check the file type for jpeg, jpg, and png
+        if not image.name.endswith(('.jpeg', '.png')):
+            messages.error(request, "Leidžiami tik JPEG ir PNG vaizdai!")
+            return render(request, 'miskoris_app/photos.html')
+
+        fs = FileSystemStorage()
+        filename = fs.save(image.name, image)  
+        uploaded_file_url = fs.url(filename)   
+
+    return render(request, 'miskoris_app/photos.html', {'uploaded_file_url': uploaded_file_url})
+
+def forest(request):
+    return render(request, "miskoris_app/forest.html")

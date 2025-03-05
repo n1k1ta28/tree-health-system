@@ -7,4 +7,7 @@ urlpatterns=[
   path('prisijungimas',views.login, name="login"),
   path('registracija',views.register, name="register"),
   path('miskai',views.forests, name="forests"),
+  path('nuotraukos',views.photos, name="photos"),
+  path('image_upload', views.image_upload, name='image_upload'),
+  path('miskas', views.forest, name='forest'),
 ]
