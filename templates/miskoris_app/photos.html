@@ -4,8 +4,8 @@
 
 {% block sidebar_content %}
     <h2>Įkelkite norimą nuotrauką</h2>
-    
     <form method="post" enctype="multipart/form-data" action="{% url 'image_upload' %}">
+        {% csrf_token %}
         <input type="file" name="image" accept=".jpeg, .png" required>
         <button type="submit">Įkelti</button>
     </form>
