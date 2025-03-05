@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-da#c#bo4#($fqn$rl(+)2)b0gruic(shi^uf!&b#c6t3fu84m@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -48,6 +48,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'miskoris_app.urls'
@@ -116,11 +117,17 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
-STATIC_URL = 'static/'
-# Ensure your static files are served correctly in development
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # If your 'static' folder is in the base directory
-]
+# STATIC_URL = '/static/'
+# # Ensure your static files are served correctly in development
+# STATICFILES_DIRS = [
+#     BASE_DIR / 'static',  # If your 'static' folder is in the base directory
+# ]
+
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / "static"]  # Where your styles.css lives
+STATIC_ROOT = BASE_DIR / "staticfiles"    # Where files are collected
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'  # Optional: compresses files
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
