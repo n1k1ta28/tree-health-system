@@ -82,14 +82,30 @@ WSGI_APPLICATION = 'miskoris_project.wsgi.application'
 #     }
 # }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'miskoriusdb',          # Your database name
+#         'USER': 'postgres',             # Default PostgreSQL user
+#         'PASSWORD': 'Miskorius4ktu',    # Password set during installation
+#         'HOST': 'localhost',            # Or '127.0.0.1'
+#         'PORT': '5432',                 # Default PostgreSQL port
+#     }
+# }
+
+from decouple import config
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'miskoriusdb',          # Your database name
-        'USER': 'postgres',             # Default PostgreSQL user
-        'PASSWORD': 'Miskorius4ktu',    # Password set during installation
-        'HOST': 'localhost',            # Or '127.0.0.1'
-        'PORT': '5432',                 # Default PostgreSQL port
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST'),
+        'PORT': config('DB_PORT'),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
