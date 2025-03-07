@@ -75,10 +75,21 @@ WSGI_APPLICATION = 'miskoris_project.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'miskoriusdb',          # Your database name
+        'USER': 'postgres',             # Default PostgreSQL user
+        'PASSWORD': 'Miskorius4ktu',    # Password set during installation
+        'HOST': 'localhost',            # Or '127.0.0.1'
+        'PORT': '5432',                 # Default PostgreSQL port
     }
 }
 
