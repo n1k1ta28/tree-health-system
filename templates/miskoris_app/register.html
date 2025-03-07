@@ -4,8 +4,45 @@
 {% block title %}Registracija{% endblock %}
 
 {% block content %}
-<div style="min-height: 100vh;">
-    <h2>Registracija</h2>
-    <p>Jau turite paskyrą? <a href="{% url 'login' %}">Prisijungti</a></p>
+
+<div class="registration-background-container">
+    <div class="register-container">
+        <h2>Registracija</h2>
+
+        <form method="POST" action="">
+            {% csrf_token %}
+
+            {% if form.errors %}
+                <div style="color: red; margin-bottom: 15px;">
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <label for="{{ form.username.id_for_label }}">Vardas</label>
+            {{ form.username }}
+
+            <label for="{{ form.email.id_for_label }}">El. paštas</label>
+            {{ form.email }}
+
+            <label for="{{ form.password1.id_for_label }}">Slaptažodis</label>
+            {{ form.password1 }}
+
+            <label for="{{ form.password2.id_for_label }}">Pakartokite slaptažodį</label>
+            {{ form.password2 }}
+
+            <div class="checkbox-container">
+                <input type="checkbox" id="terms" name="terms" required>
+                <label for="terms">Sutinku su <a href="#">Miškoris taisyklėmis</a>.</label>  <!-- TO DO -->
+            </div>
+
+            <input type="submit" value="Registruotis" name="Create User" class="btn">
+        </form>
+
+        <p>Jau turite paskyrą? <a href="{% url 'login' %}">Prisijungti</a></p>
+    </div>
 </div>
 {% endblock %}

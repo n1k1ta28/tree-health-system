@@ -9,7 +9,7 @@ body {
     overflow-x: hidden
 }
 .background{
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -153,8 +153,8 @@ footer {
     margin-left: auto;
     margin-right: auto;
     width: 100%;
-    padding-left: 0px;
-    padding-right: 160px;
+    padding-left: 80px;
+    padding-right: 80px;
 }
 
 .register-container input[type="text"],
@@ -235,7 +235,7 @@ footer {
 
 /* Unchanged registration-background-container */
 .registration-background-container {
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

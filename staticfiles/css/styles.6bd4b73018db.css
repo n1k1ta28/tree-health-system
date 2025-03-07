@@ -9,7 +9,7 @@ body {
     overflow-x: hidden
 }
 .background{
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -130,8 +130,6 @@ footer {
     min-height: 600px; /* Added to make it taller */
     /*margin: 0 auto;*/
     padding: 50px; /* Increased from 40px for more internal space */
-    padding-left: 40px;
-    padding-right: 40px;
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 0 25px rgba(0, 0, 0, 0.25); /* Slightly larger shadow */
@@ -152,15 +150,13 @@ footer {
     text-align: left;
     margin-left: auto;
     margin-right: auto;
-    width: 100%;
-    padding-left: 0px;
-    padding-right: 160px;
+    width: 90%;
 }
 
 .register-container input[type="text"],
 .register-container input[type="email"],
 .register-container input[type="password"] {
-    width: 100%;
+    width: 90%;
     padding: 14px; /* Increased from 12px */
     margin-bottom: 25px; /* Increased from 20px */
     border: 1px solid #000;
@@ -182,14 +178,12 @@ footer {
 
 .checkbox-container input[type="checkbox"] {
     margin-left: auto;
-    margin-bottom: 13px;
 }
 
 .checkbox-container label {
-    margin-left: 10px;
     font-size: 18px; /* Increased from 16px */
     color: #666;
-    width: 100%;
+    width: 90%;
 }
 
 .checkbox-container a {
@@ -202,7 +196,7 @@ footer {
 }
 
 .register-container input[type="submit"] {
-    width: 100%;
+    width: 90%;
     padding: 14px; /* Increased from 12px */
     background-color: #217e27;
     color: #fff;
@@ -235,7 +229,7 @@ footer {
 
 /* Unchanged registration-background-container */
 .registration-background-container {
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

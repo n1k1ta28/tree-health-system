@@ -1,6 +1,9 @@
 ﻿from django.shortcuts import render
 from django.http import HttpResponse
 from django.core.files.storage import FileSystemStorage
+from django.contrib.auth.forms import UserCreationForm 
+
+from .forms import CreateUserForm
 
 # Create your views here.
 
@@ -14,7 +17,15 @@ def login(request):
     return render(request, "miskoris_app/login.html")
 
 def register(request):
-    return render(request, "miskoris_app/register.html")
+    form = CreateUserForm()
+
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            form.save()
+
+    context = {'form':form}
+    return render(request, "miskoris_app/register.html", context)
 
 def forests(request):
     return render(request, "miskoris_app/forests.html")
