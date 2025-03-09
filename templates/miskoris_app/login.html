@@ -4,9 +4,36 @@
 {% block title %}Prisijungimas{% endblock %}
 
 {% block content %}
-<div style="min-height: 100vh;">
-    <h2>Prisijungimas</h2>
-    <a href="{% url 'forests' %}" class="btn">Prisijungti</a>
-    <p>Neturite paskyros? <a href="{% url 'register' %}">Registruotis</a></p>
+<div class="registration-background-container">
+    <div class="register-container">
+        <h2>Prisijungimas</h2>
+
+        {% for message in messages %}
+            <p id="messages">{{ message }}</p>
+        {% endfor %}
+
+        {% if form.errors %}
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p id="errors">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+        {% endif %}
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="username">Vardas / el. paštas</label>
+                <input type="text" name="username" id="username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Slaptažodis</label>
+                <input type="password" name="password" id="password" class="form-control" required>
+            </div>
+            <input type="submit" value="Prisijungti" name="Login" class="btn btn-primary">
+        </form>
+
+        <p>Neturite paskyros? <a href="{% url 'register' %}">Registruotis</a></p>
+    </div>
 </div>
 {% endblock %}

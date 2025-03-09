@@ -49,6 +49,19 @@ header {
 .header-right a:hover {
     color: #45a049;
 }
+
+.header-right span {
+    font-size: 1.2em;
+    color: #555;
+    padding: 5px 10px;
+    margin-right: 22px;
+    transition: color 0.3s ease; /* Smooth color transition */
+}
+
+.header-right span:hover {
+    color: #217e27;         /* Blue color on hover */
+}
+
 section {
     padding: 20px;
     margin: 0 10%;
@@ -127,7 +140,7 @@ footer {
 
 .register-container {
     max-width: 4000px; /* Increased from 1200px to make it wider */
-    min-height: 600px; /* Added to make it taller */
+    min-height: 100px; /* Added to make it taller */
     /*margin: 0 auto;*/
     padding: 50px; /* Increased from 40px for more internal space */
     padding-left: 40px;
@@ -172,7 +185,7 @@ footer {
     box-sizing: border-box;
 }
 
-.checkbox-container {
+.form-check {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -180,16 +193,16 @@ footer {
     text-align: left;
 }
 
-.checkbox-container input[type="checkbox"] {
-    margin-left: auto;
-    margin-bottom: 13px;
+.form-check input[type="checkbox"] {
+    /*margin-left: auto;*/
+    margin-bottom: 13px; /* original 13 */
 }
 
-.checkbox-container label {
+.form-check label {
     margin-left: 10px;
     font-size: 18px; /* Increased from 16px */
     color: #666;
-    width: 100%;
+    /*width: 100%;*/
 }
 
 .checkbox-container a {
@@ -245,4 +258,24 @@ footer {
     align-items: center;
     margin: 0;
     padding: 20px;
+}
+
+#errors {
+    color: #ff3333;
+    font-size: 14px;
+    margin: 5px 0;
+    padding: 8px;
+    background-color: #ffe6e6;
+    border-radius: 4px;
+    border-left: 4px solid #ff3333;
+}
+
+#messages {
+    color: #333333; 
+    font-size: 14px;
+    margin: 5px 0;
+    padding: 8px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    border-left: 4px solid #666666;
 }

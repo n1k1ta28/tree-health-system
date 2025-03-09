@@ -9,7 +9,7 @@ body {
     overflow-x: hidden
 }
 .background{
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -50,16 +50,15 @@ header {
     color: #45a049;
 }
 
-.header-right span {
+#hello-msg {
     font-size: 1.2em;
     color: #555;
     padding: 5px 10px;
-    margin-right: 22px;
-    transition: color 0.3s ease; /* Smooth color transition */
+    transition: color 0.3s ease;
 }
 
-.header-right span:hover {
-    color: #217e27;         /* Blue color on hover */
+#hello-msg:hover {
+    color: #217e27;
 }
 
 section {
@@ -140,7 +139,7 @@ footer {
 
 .register-container {
     max-width: 4000px; /* Increased from 1200px to make it wider */
-    min-height: 100px; /* Added to make it taller */
+    min-height: 600px; /* Added to make it taller */
     /*margin: 0 auto;*/
     padding: 50px; /* Increased from 40px for more internal space */
     padding-left: 40px;
@@ -185,7 +184,7 @@ footer {
     box-sizing: border-box;
 }
 
-.form-check {
+.checkbox-container {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -193,16 +192,16 @@ footer {
     text-align: left;
 }
 
-.form-check input[type="checkbox"] {
-    /*margin-left: auto;*/
-    margin-bottom: 13px; /* original 13 */
+.checkbox-container input[type="checkbox"] {
+    margin-left: auto;
+    margin-bottom: 13px;
 }
 
-.form-check label {
+.checkbox-container label {
     margin-left: 10px;
     font-size: 18px; /* Increased from 16px */
     color: #666;
-    /*width: 100%;*/
+    width: 100%;
 }
 
 .checkbox-container a {
@@ -248,7 +247,7 @@ footer {
 
 /* Unchanged registration-background-container */
 .registration-background-container {
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
