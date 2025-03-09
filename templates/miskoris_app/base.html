@@ -19,9 +19,17 @@
         <h1>Miškoris</h1>
     </div>
     <div class="header-right">
+        {% if user.is_authenticated %}
+            <span>Sveiki, {{request.user}}</span>            
+        {% endif %}
+        <a href="{% url 'forests' %}">Mano miškai</a>
         <a href="{% url 'home' %}">Pagrindinis</a>
         <a href="{% url 'about' %}">Apie</a>
-        <a href="{% url 'login' %}">Prisijungti</a>
+        {% if user.is_authenticated %}
+            <a href="{% url 'logout' %}">Atsijungti</a>
+        {% else %}
+            <a href="{% url 'login' %}">Prisijungti</a>
+        {% endif %}
 
     </div>
 

@@ -1,0 +1,250 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f4f4f4;
+    color: #333;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden
+}
+.background{
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    height: 100vh; /* Full-screen height */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white; /* Adjust text color for visibility */
+    text-align: center;
+    
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background-color: #11220c;
+    color: white;
+}
+
+.header-left h1 {
+    margin: 0;
+}
+
+.header-right {
+    display: flex;
+    gap: 10px; 
+}
+
+.header-right a {
+    color: white;
+    text-decoration: none;
+    font-size: 1.2em;
+    padding: 5px 10px;
+}
+
+.header-right a:hover {
+    color: #45a049;
+}
+section {
+    padding: 20px;
+    margin: 0 10%;
+    
+}
+footer {
+    position:relative;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    text-align: center;
+    padding: 1px;
+    background-color: #141414;
+    color: white;
+}
+
+.text-container {
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    padding: 40px;
+    border-radius: 20px;
+    color: white; /* Text color for contrast */
+}
+
+/* Main container to align sidebar and content horizontally */
+.main-container {
+    display: flex; /* Enables flexbox */
+    min-height: 100vh; /* Full height */
+}
+/* Sidebar Styles */
+.sidebar {
+    width: 200px;
+    background: rgba(255, 255, 255, 0.8); /* Semi-transparent black */
+    color: white;
+    padding: 20px;
+    min-height: calc(100vh - 60px);
+}
+
+.sidebar a {
+    display: block;
+    color: rgb(0, 0, 0);
+    padding: 10px;
+    text-decoration: none;
+    font-size: 18px;
+}
+
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Content area (beside sidebar) */
+.content {
+    margin-left: 10px;
+    flex-grow: 1;
+    padding: 20px;
+}
+.btn {
+    display: inline-block;
+    background-color: #217e27;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 16px;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background-color: #195f1e;
+}
+
+.icon-large {
+    font-size: 24px; /* Adjust the size as needed */
+    padding: 5px;
+}
+
+.register-container {
+    max-width: 4000px; /* Increased from 1200px to make it wider */
+    min-height: 600px; /* Added to make it taller */
+    /*margin: 0 auto;*/
+    padding: 50px; /* Increased from 40px for more internal space */
+    padding-left: 40px;
+    padding-right: 40px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.25); /* Slightly larger shadow */
+    text-align: center;
+}
+
+.register-container h2 {
+    font-size: 36px; /* Increased from 32px */
+    margin-bottom: 30px; /* More spacing */
+    text-align: center;
+}
+
+.register-container label {
+    display: block;
+    margin-bottom: 10px; /* Increased from 8px */
+    font-size: 18px; /* Increased from 16px */
+    color: #333;
+    text-align: left;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+}
+
+.register-container input[type="text"],
+.register-container input[type="email"],
+.register-container input[type="password"] {
+    width: 100%;
+    padding: 14px; /* Increased from 12px */
+    margin-bottom: 25px; /* Increased from 20px */
+    border: 1px solid #000;
+    border-radius: 5px;
+    font-size: 18px; /* Increased from 16px */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    padding-left: 80px;
+    padding-right: 80px;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 30px; /* Increased from 25px */
+    text-align: left;
+}
+
+.checkbox-container input[type="checkbox"] {
+    margin-left: auto;
+    margin-bottom: 15px;
+}
+
+.checkbox-container label {
+    margin-left: 10px;
+    font-size: 18px; /* Increased from 16px */
+    color: #666;
+    width: 100%;
+}
+
+.checkbox-container a {
+    color: #217e27;
+    text-decoration: none;
+}
+
+.checkbox-container a:hover {
+    text-decoration: underline;
+}
+
+.register-container input[type="submit"] {
+    width: 100%;
+    padding: 14px; /* Increased from 12px */
+    background-color: #217e27;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 20px; /* Increased from 18px */
+    cursor: pointer;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 80px;
+    padding-right: 80px;
+}
+
+.register-container input[type="submit"]:hover {
+    background-color: #265044;
+}
+
+.register-container p {
+    text-align: center;
+    margin-top: 25px; /* Increased from 20px */
+    font-size: 18px; /* Increased from 16px */
+}
+
+.register-container p a {
+    color: #217e27;
+    text-decoration: none;
+}
+
+.register-container p a:hover {
+    text-decoration: underline;
+}
+
+/* Unchanged registration-background-container */
+.registration-background-container {
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 20px;
+}
