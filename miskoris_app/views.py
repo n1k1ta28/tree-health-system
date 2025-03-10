@@ -1,4 +1,4 @@
-﻿from django.shortcuts import render, redirect
+﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.forms import UserCreationForm 
@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
+from .models import Forest, Forest_image
 
 from .forms import CreateUserForm
 
@@ -87,28 +88,81 @@ def registerPage(request):
 
 @login_required(login_url='login')
 def forests(request):
-    return render(request, "miskoris_app/forests.html")
+    if request.method == 'POST':
+        try:
+            if 'delete_id' in request.POST:
+                print("Received POST data:", request.POST)
+                forest_id = request.POST.get('delete_id')
+                forest = get_object_or_404(Forest, id=forest_id, user=request.user)
+                forest.delete()
+                messages.success(request, 'Miškas sėkmingai ištrintas!')
+            else:
+                name = request.POST.get('name')
+                address = request.POST.get('address')
+                area = request.POST.get('area')
+                latitude = request.POST.get('latitude')
+                longitude = request.POST.get('longitude')
+
+                if not name or not address or not area or not latitude or not longitude:
+                    raise ValueError("All fields are required.")
+
+                Forest.objects.create(
+                    user=request.user,
+                    name=name,
+                    address=address,
+                    area=area,
+                    latitude=latitude,
+                    longitude=longitude
+                )
+
+                messages.success(request, 'Miškas pridėtas sėkmingai!')
+
+
+            return redirect('forests')
+
+        except Exception as e:
+            print(f"Klaida: {e}")
+            messages.error(request, f"Nepavyko atlikti operacijos: {e}")
+            return redirect('forests')
+
+    forests = Forest.objects.filter(user=request.user)
+    return render(request, "miskoris_app/forests.html", {'forests': forests})
+
 
 @login_required(login_url='login')
-def photos(request):
-    return render(request, "miskoris_app/photos.html")
+def forest(request, id):
+    forest = get_object_or_404(Forest, id=id)
+    return render(request, "miskoris_app/forest.html", {'forest': forest})
+
+@login_required(login_url='login')
+def photos(request, id):
+    forest = get_object_or_404(Forest, id=id)
+    photos = forest.images.all()  
+
+    return render(request, 'miskoris_app/photos.html', {'forest': forest, 'photos': photos})
 
 @login_required(login_url='login')
 def image_upload(request):
     if request.method == 'POST' and request.FILES.get('image'):
         image = request.FILES['image']
         
-        # Check the file type for jpeg, jpg, and png
         if not image.name.endswith(('.jpeg', '.png')):
             messages.error(request, "Leidžiami tik JPEG ir PNG vaizdai!")
             return render(request, 'miskoris_app/photos.html')
 
-        fs = FileSystemStorage()
-        filename = fs.save(image.name, image)  
-        uploaded_file_url = fs.url(filename)   
+        image_data = image.read()
 
-    return render(request, 'miskoris_app/photos.html', {'uploaded_file_url': uploaded_file_url})
+        forest_id = request.POST.get('forest_id')
+        forest = Forest.objects.get(id=forest_id)
 
-@login_required(login_url='login')
-def forest(request):
-    return render(request, "miskoris_app/forest.html")
+        forest_image = Forest_image(forest=forest, image=image_data)
+        forest_image.save()
+
+        messages.success(request, "Nuotrauka įkelta sėkmingai!")
+
+        return redirect('photos', id=forest_id)
+
+    return render(request, 'miskoris_app/photos.html')
+
+
+

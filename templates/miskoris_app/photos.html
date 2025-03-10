@@ -1,11 +1,27 @@
-{% extends 'miskoris_app/sidebar.html' %}
 
+{% extends 'miskoris_app/sidebar.html' %}
+{% load custom_filters %}
 {% block title %}Nuotraukos{% endblock %}
 
 {% block sidebar_content %}
+    {% if photos %}
+    <h2>Esamos nuotraukos:</h2>
+    <ul style="list-style-type: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px;">
+        {% for photo in photos %}
+            <li>
+                <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px">
+            </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>Šiam miškui nėra nuotraukų.</p>
+    {% endif %}
+
     <h2>Įkelkite norimą nuotrauką</h2>
     <form method="post" enctype="multipart/form-data" action="{% url 'image_upload' %}">
         {% csrf_token %}
+        <input type="hidden" name="forest_id" value="{{ forest.id }}">
+        
         <input type="file" name="image" accept=".jpeg, .png" required>
         <button type="submit">Įkelti</button>
     </form>

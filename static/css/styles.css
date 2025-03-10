@@ -279,3 +279,114 @@ footer {
     border-radius: 4px;
     border-left: 4px solid #666666;
 }
+
+.forest-add-container {
+    width: 400px; 
+    margin: 50px auto; 
+    padding: 10px 20px;
+    background-color: #f9f9f9; 
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1); 
+    text-align: center;
+}
+
+.forest-add-container form {
+    display: flex;
+    flex-direction: column;
+}
+
+.forest-add-container label {
+    font-weight: bold;
+    margin-top: 8px;
+    text-align: left;
+}
+
+.forest-add-container input {
+    width: 95%;
+    padding: 6px;
+    margin-top: 4px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.forest-add-container .button-group {
+    display: flex;
+    justify-content: space-between; 
+    margin-top: 10px;
+}
+
+.forest-add-container button {
+    width: 48%; 
+    padding: 8px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.forest-add-container .btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.forest-add-container .btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+button.btn-clear {
+    display: block; 
+    margin: 0 auto;  
+    float: right;  
+    width: fit-content; 
+
+    background-color: transparent; 
+    border: none; 
+    color: black; 
+    font-size: inherit; 
+    cursor: pointer;
+    padding: 2px 8px;
+}
+
+button.btn-clear:hover {
+    color: #333;  
+    background-color: #f0f0f0;  
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.forest-table {
+    width: 100%;
+    border-collapse: collapse; 
+    margin-top: 20px; 
+}
+
+.forest-table th {
+    background-color: #f4f4f4;
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.forest-table td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.forest-item {
+    color: #217e27; 
+    text-decoration: none; 
+}
+
+.forest-item:hover {
+    color: #265044; 
+    text-decoration: underline; 
+}
+
+/* Style the delete button */
+.no-outline {
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: rgb(0, 0, 0);
+}
+
+
+

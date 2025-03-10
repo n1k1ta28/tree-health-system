@@ -1,6 +1,85 @@
 {% extends 'miskoris_app/sidebar.html' %}
 {% block title %}Miškai{% endblock %}
 
-{% block sidebar_content %}
-    <p><a href="{% url 'forest' %}">Miškas 123-45</a></p>
+{% block sidebar_content %}   
+
+    <h2>Mano miškai</h2>
+    <hr style="border: 1px solid black; margin: 20px 0;">
+    <button onclick="document.getElementById('addForestForm').style.display='block'" class="btn btn-clear">
+        <i class="fas fa-plus"></i> Pridėti
+    </button>
+    
+    {% if messages %}
+    <div class="alert alert-success">
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+   <div id="addForestForm"  class="forest-add-container" style="display: none;">
+        <form method="POST" action="{% url 'forests' %}">
+            {% csrf_token %}
+            
+            <label for="name">Pavadinimas:</label>
+            <input type="text" name="name" required><br>
+         
+            <label for="address">Adresas:</label>
+            <input type="text" name="address" required><br>
+
+            <label for="area">Plotas (ha):</label>
+            <input type="number" name="area" required><br>
+
+            <label for="latitude">Platuma:</label>
+            <input type="number" name="latitude" step="0.0000001"required><br>
+
+            <label for="longitude">Ilguma:</label>
+            <input type="number" name="longitude" step="0.0000001" required><br>
+
+            <div class="button-group">
+                <button type="submit" class="btn">Išsaugoti</button>
+                <button type="button" onclick="document.getElementById('addForestForm').style.display='none'" class="btn btn-secondary">
+                    Atšaukti
+                </button>
+            </div>
+        </form>
+    </div> 
+
+    <div>
+        {% if forests %}
+            <table class="forest-table">
+                <thead>
+                    <tr>
+                        <th>Pavadinimas</th>
+                        <th>Adresas</th>
+                        <th>Plotas (ha)</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for forest in forests %}
+                        <tr> 
+                            <td><a href="{% url 'forest' forest.id %}" class="forest-item">{{ forest.name }}</a></td>
+                            <td><span class="forest-address">{{ forest.address }}</span></td>
+                            <td><span class="forest-area">{{ forest.area }} ha</span></td>
+                            <td>
+                                <form method="POST" action="{% url 'forests' %}" style="display:inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="delete_id" value="{{ forest.id }}">
+                                    <button type="submit" class="no-outline" onclick="return confirm('Ar tikrai norite ištrinti šį mišką?');">
+                                        <i class="fas fa-trash"></i> 
+                                    </button>  
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>Neturite miškų.</p>
+        {% endif %}
+    </div>
+
 {% endblock %}
+
+

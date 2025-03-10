@@ -1,10 +1,14 @@
 {% extends 'miskoris_app/sidebar.html' %}
-{% block title %}Miškas{% endblock %}
+{% block title %}Miškas - {{ forest.name }} {% endblock %}
 
 {% block sidebar_content %}
-    <h2>Miškas 123-45</h2>
+    <h2>Miškas {{ forest.name }}</h2>
     <hr style="border: 1px solid black; margin: 20px 0;">
-
-    <p><a href="{% url 'photos' %}">Nuotraukos</a></p>
+    <p><strong>Adresas:</strong> {{ forest.address }}</p>
+    <p><strong>Plotas:</strong> {{ forest.area }} ha</p>
+    <p><strong>Platuma:</strong> {{ forest.latitude }}</p>
+    <p><strong>Ilguma:</strong> {{ forest.longitude }}</p>
+    <p><a href="{% url 'photos' id=forest.id %}" class="forest-item">Nuotraukos</a></p>
 
 {% endblock %}
+
