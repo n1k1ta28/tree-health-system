@@ -3,12 +3,24 @@
 
 {% block sidebar_content %}
     <h2>Miškas {{ forest.name }}</h2>
-    <hr style="border: 1px solid black; margin: 20px 0;">
-    <p><strong>Adresas:</strong> {{ forest.address }}</p>
-    <p><strong>Plotas:</strong> {{ forest.area }} ha</p>
-    <p><strong>Platuma:</strong> {{ forest.latitude }}</p>
-    <p><strong>Ilguma:</strong> {{ forest.longitude }}</p>
-    <p><a href="{% url 'photos' id=forest.id %}" class="forest-item">Nuotraukos</a></p>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+
+    <div class="forest-content">
+        <div class="forest-container">
+            <h3 class="centered-title">Aprašymas</h3>
+            <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
+            <p><strong>Adresas:</strong> {{ forest.address }}</p>
+            <p><strong>Plotas:</strong> {{ forest.area }} ha</p>
+            <p><strong>Platuma:</strong> {{ forest.latitude }}</p>
+            <p><strong>Ilguma:</strong> {{ forest.longitude }}</p>
+        </div>
+        <div class="forest-container">
+            <h3 class="centered-title">Medžiai</h3>
+            <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
+            <p><a href="{% url 'photos' id=forest.id %}" class="forest-item">Nuotraukos</a></p>
+        </div>
+    </div>
 
 {% endblock %}
+
 

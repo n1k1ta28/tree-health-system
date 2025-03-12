@@ -5,19 +5,16 @@
 
 {% block sidebar_content %}
     <h2>Nuotraukos  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h2>
-    <hr style="border: 1px solid black; margin: 20px 0;">
+    <hr style="border: 1px solid rgb(192, 192, 192);; margin: 20px 0;">
     <button type="button" class="btn btn-clear" onclick="submitForm()"><i class="fas fa-trash"></i> Pašalinti</button>
     <button onclick="document.getElementById('addPhotoUploadForm').style.display='block'" class="btn btn-clear">
-        <i class="fas fa-plus"></i> Įkelti
-    </button>
+        <i class="fas fa-plus"></i> Įkelti</button>
     
 
     {% if messages %}
-    <div class="alert alert-success">
     {% for message in messages %}
-        <p >{{ message }}</p>
+        <p id="messages">{{ message }}</p>
     {% endfor %}
-    </div>
     {% endif %}
     <div style="height: 1em;"></div>
 
@@ -56,19 +53,32 @@
     {% endif %}
 
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            document.getElementById('fileInput').addEventListener('change', function(event) {
-                const fileNameDisplay = document.getElementById('fileName');
-                const fileList = event.target.files;
-                
-                if (fileList.length > 0) {
-                    let fileNames = Array.from(fileList).map(file => file.name).join(', ');
-                    fileNameDisplay.textContent = "Pasirinkta: " + fileNames;
-                } else {
-                    fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+     document.addEventListener("DOMContentLoaded", function() {
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const fileNameDisplay = document.getElementById('fileName');
+            const fileList = event.target.files;
+            
+            const allowedExtensions = ['.jpeg', '.png'];
+            let isValid = true;
+            let fileNames = Array.from(fileList).map(file => file.name).join(', ');
+            
+            for (let i = 0; i < fileList.length; i++) {
+                let file = fileList[i];
+                if (!allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                    isValid = false;
+                    break;
                 }
-            });
+            }
+
+            if (isValid) {
+                fileNameDisplay.textContent = "Pasirinkta: " + fileNames;
+            } else {
+                fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+                alert('Tik JPEG ir PNG failai yra leidžiami.');
+                document.getElementById('fileInput').value = '';
+            }
         });
+    });
         // Function to reset the file input and the file name display
         function resetFileInput() {
             const fileInput = document.getElementById('fileInput');
