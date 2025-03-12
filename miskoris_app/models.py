@@ -1,3 +1,4 @@
+from django.contrib.postgres.fields import JSONField
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -11,6 +12,8 @@ class Forest(models.Model):
     
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+
+    polygon_coords = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.name

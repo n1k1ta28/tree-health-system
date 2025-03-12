@@ -1,10 +1,130 @@
 {% extends 'miskoris_app/base.html' %}
 {% load static %}
 
-{% block title %}Apie - Miškoris{% endblock %}
+{% block title %}Žemėlapis{% endblock %}
 
 {% block content %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-<p>zemelapis su visais naudotojo miskais</p>
+    <style>
+        #map { 
+            height: 750px; 
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .forest-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .forest-btn {
+            margin-left: 10px;
+            padding: 8px 15px;
+            background: #217e27;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .forest-btn:hover {
+            background: #2ecc71;
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        h2 {
+            margin-left: 10px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+    </style>
 
+    <h2>Miškų žemėlapis</h2>
+    
+    <div class="forest-list">
+        {% for forest in forests %}
+            <button class="forest-btn" data-forest-id="{{ forest.id }}">
+                {{ forest.name }}
+            </button>
+        {% endfor %}
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        var forestsData = JSON.parse('{{ forests_data|escapejs }}');
+        var forestPolygons = {};
+
+        var map = L.map('map').setView([55.1694, 23.8813], 7);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+        }).addTo(map);
+
+        var forestLayerGroup = L.featureGroup().addTo(map);
+
+        var forestPolygonStyle = {
+            color: '#2ecc71',
+            weight: 2,
+            opacity: 0.8,
+            fillColor: '#27ae60',
+            fillOpacity: 0.3
+        };
+
+        forestsData.forEach(function(forest) {
+            if (forest.polygon_coords && forest.polygon_coords.length > 0) {
+                try {
+                    var polygon = L.polygon(forest.polygon_coords, forestPolygonStyle)
+                        .bindTooltip(forest.name, {
+                            permanent: false,
+                            direction: 'top',
+                            className: 'forest-tooltip'
+                        })
+                        .addTo(forestLayerGroup);
+                    
+                    forestPolygons[forest.id] = polygon;
+                } catch (e) {
+                    console.error('Error creating polygon for forest', forest.id, e);
+                }
+            }
+        });
+
+        if (Object.keys(forestPolygons).length > 0) {
+            var group = new L.featureGroup(Object.values(forestPolygons));
+            map.fitBounds(group.getBounds());
+        } else {
+            L.marker([55.1694, 23.8813]).addTo(map)
+                .bindPopup('Jūs dar neturite pridėtų miškų.')
+                .openPopup();
+        }
+
+        document.querySelectorAll('.forest-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                var forestId = this.dataset.forestId;
+                var polygon = forestPolygons[forestId];
+                
+                if (polygon) {
+                    map.fitBounds(polygon.getBounds(), {
+                        padding: [50, 50],
+                        maxZoom: 19
+                    });
+                    
+                    polygon.setStyle({
+                        color: '#e74c3c',
+                        fillColor: '#c0392b',
+                        weight: 3
+                    });
+                    
+                    setTimeout(() => {
+                        polygon.setStyle(forestPolygonStyle);
+                    }, 2000);
+                }
+            });
+        });
+    </script>
 {% endblock %}

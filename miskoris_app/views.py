@@ -1,5 +1,5 @@
 ﻿from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.forms import UserCreationForm 
 from django.contrib.auth.decorators import login_required
@@ -9,6 +9,8 @@ from django.contrib import messages
 from .models import Forest, Forest_image
 
 from .forms import CreateUserForm
+
+import json
 
 # Create your views here.
 
@@ -102,9 +104,12 @@ def forests(request):
                 area = request.POST.get('area')
                 latitude = request.POST.get('latitude')
                 longitude = request.POST.get('longitude')
+                polygon_coords = request.POST.get('polygon_coords')
 
                 if not name or not address or not area or not latitude or not longitude:
                     raise ValueError("All fields are required.")
+                
+                polygon_coords = json.loads(polygon_coords)
 
                 Forest.objects.create(
                     user=request.user,
@@ -112,7 +117,8 @@ def forests(request):
                     address=address,
                     area=area,
                     latitude=latitude,
-                    longitude=longitude
+                    longitude=longitude,
+                    polygon_coords=polygon_coords
                 )
 
                 messages.success(request, 'Miškas pridėtas sėkmingai!')
@@ -178,4 +184,20 @@ def image_upload(request):
 
 @login_required(login_url='login')
 def mapPage(request):
-    return render(request, "miskoris_app/map.html")
+    forests = Forest.objects.filter(user=request.user)
+    
+    # Prepare forest data with polygon coordinates
+    forests_data = []
+    for forest in forests:
+        if forest.polygon_coords:
+            forests_data.append({
+                'id': forest.id,
+                'name': forest.name,
+                'polygon_coords': forest.polygon_coords
+            })
+    
+    context = {
+        'forests': forests,
+        'forests_data': json.dumps(forests_data)
+    }
+    return render(request, "miskoris_app/map.html", context)

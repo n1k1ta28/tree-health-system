@@ -49,6 +49,7 @@
             <input type="hidden" name="area" id="area" required>
             <input type="hidden" name="latitude" id="latitude" required>
             <input type="hidden" name="longitude" id="longitude" required>
+            <input type="hidden" name="polygon_coords" id="polygon_coords" required>
 
             <p>Plotas: <span id="area_display">0</span> ha</p>
             <p>Platuma: <span id="lat_display">0</span></p>
@@ -102,14 +103,14 @@
         let map;
         let drawnItems = new L.FeatureGroup();
         let currentMarker;
-
+    
         document.querySelector('button[onclick*="addForestForm"]').addEventListener('click', function() {
             if (!map) {
                 map = L.map('map').setView([55.1694, 23.8813], 6);
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                 }).addTo(map);
-
+    
                 map.addLayer(drawnItems);
                 let drawControl = new L.Control.Draw({
                     draw: {
@@ -125,34 +126,38 @@
                     }
                 });
                 map.addControl(drawControl);
-
+    
                 function updateMeasurements(layer) {
                     let area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]) / 10000;
                     document.getElementById('area').value = area.toFixed(2);
                     document.getElementById('area_display').textContent = area.toFixed(2);
-
+    
                     let bounds = layer.getBounds();
                     let center = bounds.getCenter();
                     document.getElementById('latitude').value = center.lat;
                     document.getElementById('longitude').value = center.lng;
                     document.getElementById('lat_display').textContent = center.lat.toFixed(7);
                     document.getElementById('lng_display').textContent = center.lng.toFixed(7);
+    
+                    // Save polygon coordinates to hidden input
+                    let coords = layer.getLatLngs()[0].map(latLng => [latLng.lat, latLng.lng]);
+                    document.getElementById('polygon_coords').value = JSON.stringify(coords);
                 }
-
+    
                 map.on('draw:created', function(e) {
                     let layer = e.layer;
                     drawnItems.clearLayers();
                     drawnItems.addLayer(layer);
                     updateMeasurements(layer);
                 });
-
+    
                 map.on('draw:edited', function(e) {
                     let layers = e.layers;
                     layers.eachLayer(function(layer) {
                         updateMeasurements(layer);
                     });
                 });
-
+    
                 const addressInput = document.getElementById('addressInput');
                 addressInput.addEventListener('input', debounce(function() {
                     const address = addressInput.value;
@@ -163,15 +168,11 @@
                                 if (data && data.length > 0) {
                                     const lat = parseFloat(data[0].lat);
                                     const lon = parseFloat(data[0].lon);
-                                    
                                     map.setView([lat, lon], 13);
-                                    
                                     if (currentMarker) {
                                         map.removeLayer(currentMarker);
                                     }
-                                    
                                     currentMarker = L.marker([lat, lon]).addTo(map);
-                                    
                                     document.getElementById('latitude').value = lat;
                                     document.getElementById('longitude').value = lon;
                                     document.getElementById('lat_display').textContent = lat.toFixed(7);
@@ -183,7 +184,7 @@
                 }, 500));
             }
         });
-
+    
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
