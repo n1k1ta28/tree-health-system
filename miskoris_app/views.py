@@ -166,7 +166,7 @@ def image_upload(request):
         forest = get_object_or_404(Forest, id=forest_id)
         images = request.FILES.getlist('images')
 
-        allowed_extensions = ('.jpeg', '.png')
+        allowed_extensions = ('.jpg', '.jpeg', '.png')
 
         for image in images:
             if not image.name.lower().endswith(allowed_extensions):
