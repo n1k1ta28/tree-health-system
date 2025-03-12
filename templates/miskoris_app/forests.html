@@ -1,7 +1,23 @@
 {% extends 'miskoris_app/sidebar.html' %}
 {% block title %}Miškai{% endblock %}
 
-{% block sidebar_content %}   
+{% block sidebar_content %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+    <style>
+        #map { height: 400px; width: 100%; margin-top: 20px; }
+        .forest-add-container { padding: 20px; }
+        .button-group { margin-top: 20px; }
+        .forest-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .forest-table th, .forest-table td { padding: 10px; border: 1px solid #ddd; }
+        .btn { padding: 10px 20px; cursor: pointer; }
+        .btn-clear { background: none; border: none; }
+        .btn-secondary { background: #ccc; }
+        .no-outline { background: none; border: none; cursor: pointer; }
+    </style>
 
     <h2>Mano miškai</h2>
     <hr style="border: 1px solid black; margin: 20px 0;">
@@ -17,7 +33,7 @@
     </div>
     {% endif %}
 
-   <div id="addForestForm"  class="forest-add-container" style="display: none;">
+    <div id="addForestForm" class="forest-add-container" style="display: none;">
         <form method="POST" action="{% url 'forests' %}">
             {% csrf_token %}
             
@@ -25,16 +41,18 @@
             <input type="text" name="name" required><br>
          
             <label for="address">Adresas:</label>
-            <input type="text" name="address" required><br>
+            <input type="text" name="address" id="addressInput" required><br>
 
-            <label for="area">Plotas (ha):</label>
-            <input type="number" name="area" required><br>
+            <label>Pažymėkite miško plotą žemėlapyje:</label>
+            <div id="map"></div>
 
-            <label for="latitude">Platuma:</label>
-            <input type="number" name="latitude" step="0.0000001"required><br>
+            <input type="hidden" name="area" id="area" required>
+            <input type="hidden" name="latitude" id="latitude" required>
+            <input type="hidden" name="longitude" id="longitude" required>
 
-            <label for="longitude">Ilguma:</label>
-            <input type="number" name="longitude" step="0.0000001" required><br>
+            <p>Plotas: <span id="area_display">0</span> ha</p>
+            <p>Platuma: <span id="lat_display">0</span></p>
+            <p>Ilguma: <span id="lng_display">0</span></p>
 
             <div class="button-group">
                 <button type="submit" class="btn">Išsaugoti</button>
@@ -80,6 +98,103 @@
         {% endif %}
     </div>
 
+    <script>
+        let map;
+        let drawnItems = new L.FeatureGroup();
+        let currentMarker;
+
+        document.querySelector('button[onclick*="addForestForm"]').addEventListener('click', function() {
+            if (!map) {
+                map = L.map('map').setView([55.1694, 23.8813], 6);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                }).addTo(map);
+
+                map.addLayer(drawnItems);
+                let drawControl = new L.Control.Draw({
+                    draw: {
+                        polygon: true,
+                        marker: false,
+                        polyline: false,
+                        rectangle: false,
+                        circle: false,
+                        circlemarker: false
+                    },
+                    edit: {
+                        featureGroup: drawnItems
+                    }
+                });
+                map.addControl(drawControl);
+
+                function updateMeasurements(layer) {
+                    let area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]) / 10000;
+                    document.getElementById('area').value = area.toFixed(2);
+                    document.getElementById('area_display').textContent = area.toFixed(2);
+
+                    let bounds = layer.getBounds();
+                    let center = bounds.getCenter();
+                    document.getElementById('latitude').value = center.lat;
+                    document.getElementById('longitude').value = center.lng;
+                    document.getElementById('lat_display').textContent = center.lat.toFixed(7);
+                    document.getElementById('lng_display').textContent = center.lng.toFixed(7);
+                }
+
+                map.on('draw:created', function(e) {
+                    let layer = e.layer;
+                    drawnItems.clearLayers();
+                    drawnItems.addLayer(layer);
+                    updateMeasurements(layer);
+                });
+
+                map.on('draw:edited', function(e) {
+                    let layers = e.layers;
+                    layers.eachLayer(function(layer) {
+                        updateMeasurements(layer);
+                    });
+                });
+
+                const addressInput = document.getElementById('addressInput');
+                addressInput.addEventListener('input', debounce(function() {
+                    const address = addressInput.value;
+                    if (address.length > 3) {
+                        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data && data.length > 0) {
+                                    const lat = parseFloat(data[0].lat);
+                                    const lon = parseFloat(data[0].lon);
+                                    
+                                    map.setView([lat, lon], 13);
+                                    
+                                    if (currentMarker) {
+                                        map.removeLayer(currentMarker);
+                                    }
+                                    
+                                    currentMarker = L.marker([lat, lon]).addTo(map);
+                                    
+                                    document.getElementById('latitude').value = lat;
+                                    document.getElementById('longitude').value = lon;
+                                    document.getElementById('lat_display').textContent = lat.toFixed(7);
+                                    document.getElementById('lng_display').textContent = lon.toFixed(7);
+                                }
+                            })
+                            .catch(error => console.error('Error geocoding address:', error));
+                    }
+                }, 500));
+            }
+        });
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    </script>
+
 {% endblock %}
-
-

@@ -176,5 +176,6 @@ def image_upload(request):
 
     return render(request, 'miskoris_app/photos.html')
 
-
-
+@login_required(login_url='login')
+def mapPage(request):
+    return render(request, "miskoris_app/map.html")
