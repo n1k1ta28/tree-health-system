@@ -119,7 +119,7 @@ footer {
 }
 .btn {
     display: inline-block;
-    background-color: #217e27;
+    background-color: #244819;
     color: white;
     padding: 10px 20px;
     border-radius: 5px;
@@ -324,12 +324,12 @@ footer {
 }
 
 .forest-add-container .btn-secondary {
-    background-color: #6c757d;
+    background-color: #2f4858;
     color: white;
 }
 
 .forest-add-container .btn-secondary:hover {
-    background-color: #5a6268;
+    background-color: #38576a;
 }
 
 button.btn-clear {
@@ -388,5 +388,38 @@ button.btn-clear:hover {
     color: rgb(0, 0, 0);
 }
 
+.thin-vertical-line {
+    display: inline-block;
+    width: 1px; 
+    height: 1.2em; 
+    background-color: black; 
+    margin: 0 10px;
+    vertical-align: middle; 
+}
 
+.custom-file-input {
+    display: none; /* Hides the default file input */
+}
+
+.custom-upload-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #0C1C22;
+    color: rgb(255, 255, 255);
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    text-align: center !important;
+    transition: background-color 0.3s;
+}
+
+.custom-upload-btn:hover {
+    background-color: #000000;
+}
+
+.file-name {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #555;
+}
 

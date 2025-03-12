@@ -4,35 +4,90 @@
 {% block title %}Nuotraukos{% endblock %}
 
 {% block sidebar_content %}
+    <h2>Nuotraukos  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h2>
+    <hr style="border: 1px solid black; margin: 20px 0;">
+    <button type="button" class="btn btn-clear" onclick="submitForm()"><i class="fas fa-trash"></i> Pašalinti</button>
+    <button onclick="document.getElementById('addPhotoUploadForm').style.display='block'" class="btn btn-clear">
+        <i class="fas fa-plus"></i> Įkelti
+    </button>
+    
+
+    {% if messages %}
+    <div class="alert alert-success">
+    {% for message in messages %}
+        <p >{{ message }}</p>
+    {% endfor %}
+    </div>
+    {% endif %}
+    <div style="height: 1em;"></div>
+
+    <div id="addPhotoUploadForm"  class="forest-add-container" style="display: none;">
+        <form method="post" enctype="multipart/form-data" action="{% url 'image_upload' %}" >
+            {% csrf_token %}
+            <input type="hidden" name="forest_id" value="{{ forest.id }}">
+            <label for="fileInput" class="custom-upload-btn">
+                Pasirinkite nuotraukas <i class="fas fa-upload"></i>
+            </label>
+            <input type="file" name="images" accept=".jpeg, .png" id="fileInput" required multiple class="custom-file-input">
+            <div class="file-name" id="fileName">Pasirinkta: Nėra pasirinktos nuotraukos</div>
+            <div class="button-group">
+                <button type="submit" class="btn">Įkelti</button>
+                <button type="button" onclick="resetFileInput()" class="btn btn-secondary">
+                    Atšaukti
+                </button> 
+            </div>
+        </form>
+    </div>
+
     {% if photos %}
-    <h2>Esamos nuotraukos:</h2>
-    <ul style="list-style-type: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px;">
-        {% for photo in photos %}
+    <form method="POST" action="{% url 'photos' id=forest.id  %}"id="photoForm">
+        {% csrf_token %}
+        <ul style="list-style-type: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+            {% for photo in photos %}
             <li>
+                <input type="checkbox" name="photos_to_delete" value="{{ photo.id }}">
                 <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px">
             </li>
-        {% endfor %}
-    </ul>
+            {% endfor %}
+        </ul>
+    </form>
     {% else %}
     <p>Šiam miškui nėra nuotraukų.</p>
     {% endif %}
 
-    <h2>Įkelkite norimą nuotrauką</h2>
-    <form method="post" enctype="multipart/form-data" action="{% url 'image_upload' %}">
-        {% csrf_token %}
-        <input type="hidden" name="forest_id" value="{{ forest.id }}">
-        
-        <input type="file" name="image" accept=".jpeg, .png" required>
-        <button type="submit">Įkelti</button>
-    </form>
-    {% if messages %}
-    {% for message in messages %}
-        <p style="color: red;">{{ message }}</p>
-    {% endfor %}
-    {% endif %}
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById('fileInput').addEventListener('change', function(event) {
+                const fileNameDisplay = document.getElementById('fileName');
+                const fileList = event.target.files;
+                
+                if (fileList.length > 0) {
+                    let fileNames = Array.from(fileList).map(file => file.name).join(', ');
+                    fileNameDisplay.textContent = "Pasirinkta: " + fileNames;
+                } else {
+                    fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+                }
+            });
+        });
+        // Function to reset the file input and the file name display
+        function resetFileInput() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.value = '';
 
-    {% if uploaded_file_url %}
-        <h3>Nuotrauka įkelta</h3>
+            const fileNameDisplay = document.getElementById('fileName');
+            fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+
+            document.getElementById('addPhotoUploadForm').style.display = 'none';
+        }
         
-    {% endif %}
+        function submitForm() {
+            var checkboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
+            if (checkboxes.length === 0) {
+                return; 
+            }
+            if (confirm('Ar tikrai norite pašalinti šias nuotraukas?')) {
+                document.getElementById('photoForm').submit();
+            }
+        }
+    </script>
 {% endblock %}

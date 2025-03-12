@@ -137,29 +137,41 @@ def forest(request, id):
 @login_required(login_url='login')
 def photos(request, id):
     forest = get_object_or_404(Forest, id=id)
+    if request.method == 'POST':
+        photo_ids = request.POST.getlist('photos_to_delete')
+        if photo_ids:
+            photo_ids = list(map(int, photo_ids))
+            photos_to_delete = Forest_image.objects.filter(id__in=photo_ids)
+            
+            photos_to_delete.delete()
+
+            messages.success(request, 'Nuotraukos sėkminai pašalintos')
+
+        return redirect('photos', id=forest.id)
+
     photos = forest.images.all()  
 
     return render(request, 'miskoris_app/photos.html', {'forest': forest, 'photos': photos})
 
 @login_required(login_url='login')
 def image_upload(request):
-    if request.method == 'POST' and request.FILES.get('image'):
-        image = request.FILES['image']
-        
-        if not image.name.endswith(('.jpeg', '.png')):
-            messages.error(request, "Leidžiami tik JPEG ir PNG vaizdai!")
-            return render(request, 'miskoris_app/photos.html')
-
-        image_data = image.read()
-
+    if request.method == 'POST' and request.FILES.getlist('images'):
         forest_id = request.POST.get('forest_id')
-        forest = Forest.objects.get(id=forest_id)
+        forest = get_object_or_404(Forest, id=forest_id)
+        images = request.FILES.getlist('images')
 
-        forest_image = Forest_image(forest=forest, image=image_data)
-        forest_image.save()
+        allowed_extensions = ('.jpeg', '.png')
 
-        messages.success(request, "Nuotrauka įkelta sėkmingai!")
+        for image in images:
+            if not image.name.lower().endswith(allowed_extensions):
+                messages.error(request, f"Netinkamas failas: {image.name}. Leidžiami tik JPEG ir PNG!")
+                return render(request, 'miskoris_app/photos.html')
 
+            image_data = image.read()
+            forest_image = Forest_image(forest=forest, image=image_data)
+            forest_image.save()
+
+        messages.success(request, "Nuotraukos įkeltos sėkmingai!")
         return redirect('photos', id=forest_id)
 
     return render(request, 'miskoris_app/photos.html')
