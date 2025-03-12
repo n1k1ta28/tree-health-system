@@ -13,4 +13,5 @@ urlpatterns=[
   path('miskai/<int:id>/nuotraukos',views.photos, name="photos"),
   path('image_upload', views.image_upload, name='image_upload'),
   path('miskai/<int:id>/', views.forest, name='forest'),
+  path('zemelapis/', views.mapPage, name="map")
 ]
