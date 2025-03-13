@@ -8,15 +8,7 @@
     <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 
     <style>
-        #map { height: 400px; width: 100%; margin-top: 20px; }
-        .forest-add-container { padding: 20px; }
-        .button-group { margin-top: 20px; }
-        .forest-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        .forest-table th, .forest-table td { padding: 10px; border: 1px solid #ddd; }
-        .btn { padding: 10px 20px; cursor: pointer; }
-        .btn-clear { background: none; border: none; }
-        .btn-secondary { background: #ccc; }
-        .no-outline { background: none; border: none; cursor: pointer; }
+        #map { height: 400px; width: 100%; margin-top: 20px; }  
     </style>
 
     <h2>Mano miškai</h2>
@@ -33,16 +25,26 @@
     </div>
     {% endif %}
 
-    <div id="addForestForm" class="forest-add-container" style="display: none;">
+    <div id="addForestForm" class="forest-add-container wide" style="display: none;">
         <form method="POST" action="{% url 'forests' %}">
             {% csrf_token %}
             
-            <label for="name">Pavadinimas:</label>
-            <input type="text" name="name" required><br>
-         
-            <label for="address">Adresas:</label>
-            <input type="text" name="address" id="addressInput" required><br>
-
+            <div class="form-container">
+                <div class="form-left">
+                    <label for="name">Pavadinimas:</label>
+                    <input type="text" name="name" required><br>
+            
+                    <label for="address">Adresas:</label>
+                    <input type="text" name="address" id="addressInput" required><br>
+                </div>
+            
+                <div class="form-right">
+                    <p>Plotas: <span id="area_display">0</span> ha</p>
+                    <p>Platuma: <span id="lat_display">0</span></p>
+                    <p>Ilguma: <span id="lng_display">0</span></p>
+                </div>
+            </div>
+            <hr style="border: 1px solid rgb(192, 192, 192);   margin: 10px 0; ">
             <label>Pažymėkite miško plotą žemėlapyje:</label>
             <div id="map"></div>
 
@@ -50,10 +52,6 @@
             <input type="hidden" name="latitude" id="latitude" required>
             <input type="hidden" name="longitude" id="longitude" required>
             <input type="hidden" name="polygon_coords" id="polygon_coords" required>
-
-            <p>Plotas: <span id="area_display">0</span> ha</p>
-            <p>Platuma: <span id="lat_display">0</span></p>
-            <p>Ilguma: <span id="lng_display">0</span></p>
 
             <div class="button-group">
                 <button type="submit" class="btn">Išsaugoti</button>

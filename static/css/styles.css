@@ -292,6 +292,10 @@ footer {
     text-align: center;
 }
 
+.forest-add-container.wide {
+    width: 700px; /* Adjust width for a smaller container */
+}
+
 .forest-add-container form {
     display: flex;
     flex-direction: column;
@@ -451,4 +455,27 @@ button.btn-clear:hover {
 .centered-title {
     text-align: center;
     color: #2f4858;
+}
+
+.form-container {
+    display: flex;
+    justify-content: space-between; 
+    align-items: flex-start; 
+    gap: 20px;
+}
+
+.form-left {
+    flex: 2; 
+    text-align: left;
+    padding-right: 30px; 
+    border-right: 1px solid rgb(141, 141, 141); 
+}
+
+.form-left input {
+    margin-bottom: 20px; 
+}
+
+.form-right {
+    flex: 1;  
+    text-align: left; 
 }

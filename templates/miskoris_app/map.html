@@ -22,7 +22,7 @@
         .forest-btn {
             margin-left: 10px;
             padding: 8px 15px;
-            background: #217e27;
+            background: #244819;
             color: white;
             border: none;
             border-radius: 4px;
@@ -30,19 +30,15 @@
             transition: all 0.3s ease;
         }
         .forest-btn:hover {
-            background: #2ecc71;
+            background: #195f1e;
             transform: translateY(-2px);
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
-        h2 {
-            margin-left: 10px;
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
+
     </style>
 
     <h2>Miškų žemėlapis</h2>
-    
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
     <div class="forest-list">
         {% for forest in forests %}
             <button class="forest-btn" data-forest-id="{{ forest.id }}">
