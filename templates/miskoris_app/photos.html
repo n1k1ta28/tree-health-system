@@ -39,11 +39,14 @@
     {% if photos %}
     <form method="POST" action="{% url 'photos' id=forest.id  %}"id="photoForm">
         {% csrf_token %}
-        <ul style="list-style-type: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px;">
+        <ul style="list-style-type: none;"class="forest_images">
             {% for photo in photos %}
             <li>
-                <input type="checkbox" name="photos_to_delete" value="{{ photo.id }}">
-                <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px">
+                <div class="forest_image">
+                <input type="checkbox" name="photos_to_delete" value="{{ photo.id }} ">
+       
+                <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px" onclick="openModal(this)">
+                </div>
             </li>
             {% endfor %}
         </ul>
@@ -52,33 +55,40 @@
     <p>Šiam miškui nėra nuotraukų.</p>
     {% endif %}
 
-    <script>
-     document.addEventListener("DOMContentLoaded", function() {
-        document.getElementById('fileInput').addEventListener('change', function(event) {
-            const fileNameDisplay = document.getElementById('fileName');
-            const fileList = event.target.files;
-            
-            const allowedExtensions = ['.jpg', '.jpeg', '.png'];
-            let isValid = true;
-            let fileNames = Array.from(fileList).map(file => file.name).join(', ');
-            
-            for (let i = 0; i < fileList.length; i++) {
-                let file = fileList[i];
-                if (!allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
-                    isValid = false;
-                    break;
-                }
-            }
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+        <button class="prev" onclick="prevImage()">&#10094;</button>
+        <button class="next" onclick="nextImage()">&#10095;</button>
+    </div>
 
-            if (isValid) {
-                fileNameDisplay.textContent = "Pasirinkta: " + fileNames;
-            } else {
-                fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
-                alert('Tik JPG, JPEG ir PNG failai yra leidžiami.');
-                document.getElementById('fileInput').value = '';
-            }
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById('fileInput').addEventListener('change', function(event) {
+                const fileNameDisplay = document.getElementById('fileName');
+                const fileList = event.target.files;
+                
+                const allowedExtensions = ['.jpg', '.jpeg', '.png'];
+                let isValid = true;
+                let fileNames = Array.from(fileList).map(file => file.name).join(', ');
+                
+                for (let i = 0; i < fileList.length; i++) {
+                    let file = fileList[i];
+                    if (!allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                        isValid = false;
+                        break;
+                    }
+                }
+
+                if (isValid) {
+                    fileNameDisplay.textContent = "Pasirinkta: " + fileNames;
+                } else {
+                    fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+                    alert('Tik JPG, JPEG ir PNG failai yra leidžiami.');
+                    document.getElementById('fileInput').value = '';
+                }
+            });
         });
-    });
         // Function to reset the file input and the file name display
         function resetFileInput() {
             const fileInput = document.getElementById('fileInput');
@@ -98,6 +108,41 @@
             if (confirm('Ar tikrai norite pašalinti šias nuotraukas?')) {
                 document.getElementById('photoForm').submit();
             }
+        }
+
+        //View photo
+        let images = [];  
+        let currentIndex = 0;
+
+        function openModal(imgElement) {
+            images = Array.from(document.querySelectorAll(".forest_image img")).map(img => img.src);
+            
+            currentIndex = images.indexOf(imgElement.src);
+            
+            document.getElementById("modalImage").src = imgElement.src;
+            document.getElementById("imageModal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("imageModal").style.display = "none";
+        }
+
+        function nextImage() {
+            if (currentIndex < images.length - 1) {
+                currentIndex++;
+            } else {
+                currentIndex = 0; 
+            }
+            document.getElementById("modalImage").src = images[currentIndex];
+        }
+
+        function prevImage() {
+            if (currentIndex > 0) {
+                currentIndex--;
+            } else {
+                currentIndex = images.length - 1;
+            }
+            document.getElementById("modalImage").src = images[currentIndex];
         }
     </script>
 {% endblock %}

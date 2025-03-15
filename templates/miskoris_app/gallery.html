@@ -1,0 +1,40 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% load custom_filters %}
+{% block title %}Miškas - {{ forest.name }} {% endblock %}
+
+{% block sidebar_content %}
+    <h2>Nuotraukos</h2>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+    {% for forest, images in forests_images.items %}
+    <div class="forest-gallery">
+        <h2><a href="{% url 'photos' id=forest.id %}" class="forest-item">{{ forest.name }}</a></h2>
+
+        <div class="forest_images">
+            {% for image in images %}
+                <div class="forest_image">
+                    <img src="data:image/jpeg;base64,{{ image.image|base64encode }}" alt="Image of {{ forest.name }}"onclick="openModal(this)">
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endfor %}
+
+<div id="imageModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="modalImage">
+</div>
+
+<script>
+    //View photo
+    function openModal(imgElement) {
+        document.getElementById("modalImage").src = imgElement.src;
+        document.getElementById("imageModal").style.display = "block";
+    }
+
+    function closeModal() {
+        document.getElementById("imageModal").style.display = "none";
+    }
+</script>
+{% endblock %}
+
+

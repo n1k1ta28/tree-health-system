@@ -151,7 +151,7 @@ def photos(request, id):
             
             photos_to_delete.delete()
 
-            messages.success(request, 'Nuotraukos sėkminai pašalintos')
+            messages.success(request, 'Nuotraukos sėkmingai pašalintos!')
 
         return redirect('photos', id=forest.id)
 
@@ -201,3 +201,16 @@ def mapPage(request):
         'forests_data': json.dumps(forests_data)
     }
     return render(request, "miskoris_app/map.html", context)
+
+@login_required(login_url='login')
+def forests_gallery(request):
+    user = request.user
+
+    forests = Forest.objects.filter(user=user)
+
+    forests_images = {}
+    for forest in forests:
+        images = Forest_image.objects.filter(forest=forest)
+        forests_images[forest] = images
+
+    return render(request, 'miskoris_app/gallery.html', {'forests_images': forests_images})
