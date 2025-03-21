@@ -80,10 +80,10 @@
                             <td><span class="forest-address">{{ forest.address }}</span></td>
                             <td><span class="forest-area">{{ forest.area }} ha</span></td>
                             <td>
-                                <form method="POST" action="{% url 'forests' %}" style="display:inline;">
+                                <form method="POST" action="{% url 'forests' %}" style="display:inline;" id="deleteForm{{ forest.id }}">
                                     {% csrf_token %}
                                     <input type="hidden" name="delete_id" value="{{ forest.id }}">
-                                    <button type="submit" class="no-outline" onclick="return confirm('Ar tikrai norite ištrinti šį mišką?');">
+                                    <button type="button" class="no-outline" onclick="confirmDelete('{{ forest.id }}')">
                                         <i class="fas fa-trash"></i> 
                                     </button>  
                                 </form>
@@ -97,7 +97,33 @@
         {% endif %}
     </div>
 
+    <div id="overlay" style="display:none;"></div>
+    <div id="confirmationDialog" style="display:none;" class="forest-add-container">
+        <p>Ar tikrai norite ištrinti šį mišką?</p>
+        <div class="button-group">
+            <button onclick="submitDelete()" class="btn">Taip</button>
+            <button onclick="cancelDelete()" class="btn btn-secondary">Ne</button>
+        </div>
+    </div>
+
     <script>
+        var deleteFormId;  
+
+        function confirmDelete(forestId) {
+            deleteFormId = forestId;  
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('confirmationDialog').style.display = 'block';
+        }
+
+        function submitDelete() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('deleteForm' + deleteFormId).submit();
+        }
+
+        function cancelDelete() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
         let map;
         let drawnItems = new L.FeatureGroup();
         let currentMarker;

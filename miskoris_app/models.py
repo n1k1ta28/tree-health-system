@@ -26,6 +26,21 @@ class Forest_image(models.Model):
     def __str__(self):
         return f"Image for {self.forest.name}"
 
+class Order(models.Model):
+    STATUS_CHOICES = [
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+    ]
+    id = models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')
+    forest = models.ForeignKey(Forest, on_delete=models.CASCADE, related_name='orders')
+    worker = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_orders')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='in_progress')
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    bad_trees_found = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Order for {self.forest.name} - {self.get_status_display()}"
 # class TestClass(models.Model):
 #     name = models.CharField(max_length=100, unique=True)
 #     random_text = models.CharField(max_length=255)

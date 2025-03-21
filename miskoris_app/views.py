@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Forest, Forest_image
+from .models import Forest, Forest_image, Order
+from django.utils import timezone
 
 from .forms import CreateUserForm
 
@@ -214,3 +215,30 @@ def forests_gallery(request):
         forests_images[forest] = images
 
     return render(request, 'miskoris_app/gallery.html', {'forests_images': forests_images})
+
+
+@login_required(login_url='login')
+def orders(request, id):
+    forest = get_object_or_404(Forest, id=id)
+
+    if request.method == 'POST':
+        forest_id = request.POST.get('forest_id')
+        worker_id = 1
+
+        forest = get_object_or_404(Forest, id=forest_id)
+
+        # Create the order
+        order = Order.objects.create(
+            forest=forest,
+            worker_id=worker_id if worker_id else None,
+            created_at=timezone.now(),
+            status='in_progress'
+        )
+
+        messages.success(request, "Tikrinimas užsakytas!")
+
+    orders = Order.objects.filter(forest=forest)
+
+
+    return render(request, 'miskoris_app/orders.html', {'forest': forest, 'orders': orders})
+

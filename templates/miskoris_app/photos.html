@@ -6,7 +6,7 @@
 {% block sidebar_content %}
     <h2>Nuotraukos  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h2>
     <hr style="border: 1px solid rgb(192, 192, 192);; margin: 20px 0;">
-    <button type="button" class="btn btn-clear" onclick="submitForm()"><i class="fas fa-trash"></i> Pašalinti</button>
+    <button type="button" class="btn btn-clear"onclick="confirmDelete('{{ forest.id }}', '{{ forest.id }}')"><i class="fas fa-trash"></i> Pašalinti</button>
     <button onclick="document.getElementById('addPhotoUploadForm').style.display='block'" class="btn btn-clear">
         <i class="fas fa-plus"></i> Įkelti</button>
     
@@ -37,12 +37,12 @@
     </div>
 
     {% if photos %}
-    <form method="POST" action="{% url 'photos' id=forest.id  %}"id="photoForm">
+    <form method="POST" action="{% url 'photos' id=forest.id  %}"id="deleteForm{{ forest.id }}">
         {% csrf_token %}
         <ul style="list-style-type: none;"class="forest_images">
             {% for photo in photos %}
             <li>
-                <div class="forest_image">
+                <div class="forest_image" id="deleteForm{{ photos.id }}">
                 <input type="checkbox" name="photos_to_delete" value="{{ photo.id }} ">
        
                 <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px" onclick="openModal(this)">
@@ -62,7 +62,45 @@
         <button class="next" onclick="nextImage()">&#10095;</button>
     </div>
 
+    <div id="overlay" style="display:none;"></div>
+    <div id="confirmationDialog" style="display:none;" class="forest-add-container">
+        <p>Ar tikrai norite pašalinti?</p>
+        <div class="button-group">
+            <button onclick="submitDelete()" class="btn">Taip</button>
+            <button onclick="cancelDelete()" class="btn btn-secondary">Ne</button>
+        </div>
+    </div>
+
     <script>
+        var deleteFormId;  
+
+        function confirmDelete(forestId, formId) {
+            var checkboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
+            
+            if (checkboxes.length === 0) {
+                return; 
+            }
+            deleteFormId = formId;
+
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('confirmationDialog').style.display = 'block';
+        }
+
+        function submitDelete() {
+            var checkboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
+
+            if (deleteFormId) {
+                document.getElementById('deleteForm' + deleteFormId).submit();
+            }
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
+
+        function cancelDelete() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             document.getElementById('fileInput').addEventListener('change', function(event) {
                 const fileNameDisplay = document.getElementById('fileName');

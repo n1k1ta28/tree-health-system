@@ -1,0 +1,105 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% load custom_filters %}
+{% block title %}Nuotraukos{% endblock %}
+
+{% block sidebar_content %}
+    <h2>Tikrinimai  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h2>
+    <hr style="border: 1px solid rgb(192, 192, 192);; margin: 20px 0;">
+    <button onclick="confirmOrder()" class="btn btn-clear">
+        <i class="fas fa-plus"></i> Užsakyti tikrinimą</button>
+    
+
+    {% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+    <div style="height: 1em;"></div>
+    <div>
+        {% if orders %}
+        <table class="forest-table2">
+            <thead>
+                <tr>
+                    <th>Nr.</th>
+                    <th>Darbuotojo ID</th>
+                    <th>Statusas</th>
+                    <th>Sukūrimo data</th>
+                    <th>Patikros data</th>
+                    <th>Rasta pažeistų medžių</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ order.worker_id }}</td>
+                    <td>
+                        {% if order.status == 'in_progress' %}
+                            Vykdomas
+                        {% elif order.status == 'completed' %}
+                            Užbaigtas
+                        {% endif %}
+                    </td>
+                    <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                    <td>
+                        {% if order.completed_at %}
+                            {{ order.completed_at|date:"Y-m-d" }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if order.bad_trees_found %}
+                            Yra
+                        {% elif order.status == 'in_progress' %}
+                            -
+                        {% elif order.bad_trees_found is False %}
+                            Nėra
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6">Nėra užsakytų tikrinimų.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p>Užsakymų nėra.</p>
+        {% endif %}
+    </div>
+    
+    <form id="orderForm" method="POST" action="{% url 'orders' id=forest.id %}">
+        {% csrf_token %}
+        <input type="hidden" name="forest_id" value="{{ forest.id }}">
+    </form>
+
+    <div id="overlay" style="display:none;"></div>
+    <div id="confirmationDialog" style="display:none;"class="forest-add-container">
+        <p>Ar tikrai norite užsakyti tikrinimą?</p>
+        <div class="button-group">
+        <button onclick="submitOrder()" class="btn">Taip</button>
+        <button onclick="cancelOrder()" class="btn btn-secondary">Ne</button>
+        </div>
+    </div>
+
+    <script>
+        function confirmOrder() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('confirmationDialog').style.display = 'block';
+        }
+    
+        function submitOrder() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('orderForm').submit();
+        }
+    
+        function cancelOrder() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
+    </script>
+{% endblock %}
