@@ -242,3 +242,11 @@ def orders(request, id):
 
     return render(request, 'miskoris_app/orders.html', {'forest': forest, 'orders': orders})
 
+@login_required(login_url='login')
+def order(request, forest_id, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    forest = get_object_or_404(Forest, id=forest_id)
+    
+    images = Forest_image.objects.filter(order=order)
+
+    return render(request, 'miskoris_app/order.html', {'order': order, 'forest': forest, 'images': images})

@@ -31,7 +31,11 @@
             <tbody>
                 {% for order in orders %}
                 <tr>
-                    <td>{{ forloop.counter }}</td>
+                    <td>   
+                        <a href="{% url 'order' forest_id=forest.id order_id=order.id %}">
+                        {{ forloop.counter }}
+                        </a>
+                    </td>
                     <td>{{ order.worker_id }}</td>
                     <td>
                         {% if order.status == 'in_progress' %}

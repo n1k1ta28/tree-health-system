@@ -1,0 +1,80 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% load custom_filters %}
+{% block title %}Miškas - {{ forest.name }} {% endblock %}
+
+{% block sidebar_content %}
+    <h2>Tikrinimai  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}<span class="thin-vertical-line"></span> Tikrinimas Nr.{{ order.id}}</h2>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+
+    <div class="forest-content">
+        <div class="forest-container">
+            <h3 class="centered-title">Aprašymas</h3>
+            <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
+            <p><strong>Statusas:</strong> 
+            {% if order.status == 'in_progress' %}
+                Vykdomas
+            {% elif order.status == 'completed' %}
+                Užbaigtas
+            {% endif %}
+        </div>
+    </div>
+    {% if images %}
+    <h3>Nuotraukos</h3>
+    <div class="forest_images">
+        {% for image in images %}
+            <div class="forest_image">
+            <img  src="data:image/jpeg;base64,{{ image.image|base64encode }}" alt="Order Image" width="200px" onclick="openModal(this)">
+            </div>
+        {% endfor %}
+    </div>
+    {% else %}
+        <p>Šiam užsakymui nėra nuotraukų.</p>
+    {% endif %}
+
+
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
+        <button class="prev" onclick="prevImage()">&#10094;</button>
+        <button class="next" onclick="nextImage()">&#10095;</button>
+    </div>
+
+    <script>
+         //View photo
+         let images = [];  
+        let currentIndex = 0;
+
+        function openModal(imgElement) {
+            images = Array.from(document.querySelectorAll(".forest_image img")).map(img => img.src);
+            
+            currentIndex = images.indexOf(imgElement.src);
+            
+            document.getElementById("modalImage").src = imgElement.src;
+            document.getElementById("imageModal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("imageModal").style.display = "none";
+        }
+
+        function nextImage() {
+            if (currentIndex < images.length - 1) {
+                currentIndex++;
+            } else {
+                currentIndex = 0; 
+            }
+            document.getElementById("modalImage").src = images[currentIndex];
+        }
+
+        function prevImage() {
+            if (currentIndex > 0) {
+                currentIndex--;
+            } else {
+                currentIndex = images.length - 1;
+            }
+            document.getElementById("modalImage").src = images[currentIndex];
+        }
+    </script>
+{% endblock %}
+
+

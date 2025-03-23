@@ -15,5 +15,6 @@ urlpatterns=[
   path('nuotraukos/', views.forests_gallery, name="forests_gallery"),
   path('miskai/<int:id>/', views.forest, name='forest'),
   path('zemelapis/', views.mapPage, name="map"),
-  path('tikrinimai/<int:id>/', views.orders, name="orders")
+  path('tikrinimai/<int:id>/', views.orders, name="orders"),
+  path('tikrinimai/<int:forest_id>/<int:order_id>/tikrinimas/', views.order, name="order")
 ]
