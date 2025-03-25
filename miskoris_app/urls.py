@@ -21,5 +21,9 @@ urlpatterns=[
   path('slaptazodzio_atkurimas/', auth_views.PasswordResetView.as_view(template_name="miskoris_app/password_reset.html"), name="reset_password"),
   path('atkurimo_laiskas_issiustas/', auth_views.PasswordResetDoneView.as_view(template_name="miskoris_app/password_reset_sent.html"), name="password_reset_done"),
   path('atkurimas/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name="miskoris_app/password_reset_form.html"), name='password_reset_confirm'),
-  path('slapazodis_atkurtas/', auth_views.PasswordResetCompleteView.as_view(template_name="miskoris_app/password_reset_done.html"), name='password_reset_complete')
+  path('slapazodis_atkurtas/', auth_views.PasswordResetCompleteView.as_view(template_name="miskoris_app/password_reset_done.html"), name='password_reset_complete'),
+  path('miskai/<int:id>/dokumentai/', views.documents, name='documents'),
+  path('document_upload/', views.document_upload, name='document_upload'),
+  path('dokumentai/', views.forests_documents, name='forests_documents'),
+  path('dokumentai/<int:document_id>/', views.serve_document, name='serve_document')
 ]

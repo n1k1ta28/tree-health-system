@@ -24,6 +24,11 @@
             <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
             <p><a href="{% url 'orders' id=forest.id %}" class="forest-item">Visi tikrinimai</a></p>
         </div>
+        <div class="forest-container">
+            <h3 class="centered-title">Dokumentai</h3>
+            <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
+            <p><a href="{% url 'documents' id=forest.id %}" class="forest-item">Visi dokumentai</a></p>
+        </div>
     </div>
 
 {% endblock %}

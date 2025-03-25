@@ -1,0 +1,123 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% block title %}Dokumentai - {{ forest.name }}{% endblock %}
+
+{% block sidebar_content %}
+    <h2>Dokumentai <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h2>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+    <button type="button" class="btn btn-clear" onclick="confirmDelete('{{ forest.id }}')"><i class="fas fa-trash"></i> Pašalinti</button>
+    <button onclick="document.getElementById('addDocumentUploadForm').style.display='block'" class="btn btn-clear">
+        <i class="fas fa-plus"></i> Įkelti</button>
+
+    {% if messages %}
+    {% for message in messages %}
+        <p>{{ message }}</p>
+    {% endfor %}
+    {% endif %}
+    <div style="height: 1em;"></div>
+
+    <div id="addDocumentUploadForm" class="forest-add-container" style="display: none;">
+        <form method="post" enctype="multipart/form-data" action="{% url 'document_upload' %}">
+            {% csrf_token %}
+            <input type="hidden" name="forest_id" value="{{ forest.id }}">
+            <label for="fileInput" class="custom-upload-btn">
+                Pasirinkite dokumentus <i class="fas fa-upload"></i>
+            </label>
+            <input type="file" name="documents" accept=".pdf,.doc,.docx" id="fileInput" required multiple class="custom-file-input">
+            <div class="file-name" id="fileName">Pasirinkta: Nėra pasirinktų dokumentų</div>
+            <div class="button-group">
+                <button type="submit" class="btn">Įkelti</button>
+                <button type="button" onclick="resetFileInput()" class="btn btn-secondary">
+                    Atšaukti
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {% if documents %}
+    <form method="POST" action="{% url 'documents' id=forest.id %}" id="deleteForm{{ forest.id }}">
+        {% csrf_token %}
+        <ul style="list-style-type: none;">
+            {% for document in documents %}
+            <li>
+                <input type="checkbox" name="documents_to_delete" value="{{ document.id }}">
+                <a href="{% url 'serve_document' document_id=document.id %}" target="_blank" class="document-link">
+                    {{ document.filename|default:"Bevardis dokumentas" }}
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </form>
+    {% else %}
+    <p>Šiam miškui nėra dokumentų.</p>
+    {% endif %}
+
+    <div id="overlay" style="display:none;"></div>
+    <div id="confirmationDialog" style="display:none;" class="forest-add-container">
+        <p>Ar tikrai norite pašalinti?</p>
+        <div class="button-group">
+            <button onclick="submitDelete()" class="btn">Taip</button>
+            <button onclick="cancelDelete()" class="btn btn-secondary">Ne</button>
+        </div>
+    </div>
+
+    <script>
+        var deleteFormId;
+
+        function confirmDelete(forestId) {
+            var checkboxes = document.querySelectorAll('input[name="documents_to_delete"]:checked');
+            if (checkboxes.length === 0) {
+                return;
+            }
+            deleteFormId = forestId;
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('confirmationDialog').style.display = 'block';
+        }
+
+        function submitDelete() {
+            if (deleteFormId) {
+                document.getElementById('deleteForm' + deleteFormId).submit();
+            }
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
+
+        function cancelDelete() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('confirmationDialog').style.display = 'none';
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById('fileInput').addEventListener('change', function(event) {
+                const fileNameDisplay = document.getElementById('fileName');
+                const fileList = event.target.files;
+                const allowedExtensions = ['.pdf', '.doc', '.docx'];
+                let isValid = true;
+                let fileNames = Array.from(fileList).map(file => file.name).join(', ');
+
+                for (let i = 0; i < fileList.length; i++) {
+                    let file = fileList[i];
+                    if (!allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                        isValid = false;
+                        break;
+                    }
+                }
+
+                if (isValid) {
+                    fileNameDisplay.textContent = "Pasirinkta: " + fileNames;
+                } else {
+                    fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktų dokumentų";
+                    alert('Tik PDF, DOC ir DOCX failai yra leidžiami.');
+                    document.getElementById('fileInput').value = '';
+                }
+            });
+        });
+
+        function resetFileInput() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.value = '';
+            const fileNameDisplay = document.getElementById('fileName');
+            fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktų dokumentų";
+            document.getElementById('addDocumentUploadForm').style.display = 'none';
+        }
+    </script>
+{% endblock %}
