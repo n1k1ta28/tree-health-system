@@ -42,7 +42,16 @@ class Forest_image(models.Model):
 
     def __str__(self):
         return f"Image for {self.forest.name} (Order ID: {self.order.id if self.order else 'None'})"
-    
+
+class Forest_document(models.Model):
+    id = models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')
+    forest = models.ForeignKey(Forest, on_delete=models.CASCADE, related_name='documents')
+    document = models.BinaryField()
+    filename = models.CharField(max_length=255, null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.filename} for {self.forest.name}"
+
 # class TestClass(models.Model):
 #     name = models.CharField(max_length=100, unique=True)
 #     random_text = models.CharField(max_length=255)

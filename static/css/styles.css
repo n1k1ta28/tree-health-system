@@ -610,5 +610,15 @@ button.btn-clear:hover {
     margin: 5px;
 }
 
+a.document-link {
+    color: #217e27;
+    text-decoration: none;
+}
+
+a.document-link:hover {
+    color: #1a5f20;
+    text-decoration: underline;
+}
+
 
 

@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Forest, Forest_image, Order
+from .models import Forest, Forest_image, Order, Forest_document
 from django.utils import timezone
 
 from .forms import CreateUserForm
@@ -250,3 +250,53 @@ def order(request, forest_id, order_id):
     images = Forest_image.objects.filter(order=order)
 
     return render(request, 'miskoris_app/order.html', {'order': order, 'forest': forest, 'images': images})
+
+@login_required(login_url='login')
+def documents(request, id):
+    forest = get_object_or_404(Forest, id=id, user=request.user)
+    if request.method == 'POST':
+        document_ids = request.POST.getlist('documents_to_delete')
+        if document_ids:
+            document_ids = list(map(int, document_ids))
+            documents_to_delete = Forest_document.objects.filter(id__in=document_ids, forest=forest)
+            documents_to_delete.delete()
+            messages.success(request, 'Dokumentai sėkmingai pašalinti!')
+        return redirect('documents', id=forest.id)
+
+    documents = forest.documents.all()
+    return render(request, 'miskoris_app/documents.html', {'forest': forest, 'documents': documents})
+
+@login_required(login_url='login')
+def document_upload(request):
+    if request.method == 'POST':
+        forest_id = request.POST.get('forest_id')
+        forest = get_object_or_404(Forest, id=forest_id, user=request.user)
+        documents = request.FILES.getlist('documents')
+
+        for document in documents:
+            document_data = document.read()
+            original_filename = document.name
+            Forest_document.objects.create(
+                forest=forest,
+                document=document_data,
+                filename=original_filename
+            )
+
+        messages.success(request, "Dokumentai įkelti sėkmingai!")
+        return redirect('documents', id=forest_id)
+
+    return render(request, 'miskoris_app/documents.html')
+
+@login_required(login_url='login')
+def forests_documents(request):
+    user = request.user
+    forests = Forest.objects.filter(user=user)
+    return render(request, 'miskoris_app/documents_gallery.html', {'forests': forests})
+
+@login_required(login_url='login')
+def serve_document(request, document_id):
+    document = get_object_or_404(Forest_document, id=document_id)
+    response = HttpResponse(document.document, content_type='application/octet-stream')
+    filename = document.filename if document.filename else f"document_{document_id}"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    return response
