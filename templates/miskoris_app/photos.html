@@ -1,16 +1,14 @@
-
 {% extends 'miskoris_app/sidebar.html' %}
 {% load custom_filters %}
 {% block title %}Nuotraukos{% endblock %}
 
 {% block sidebar_content %}
     <h2>Nuotraukos  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h2>
-    <hr style="border: 1px solid rgb(192, 192, 192);; margin: 20px 0;">
-    <button type="button" class="btn btn-clear"onclick="confirmDelete('{{ forest.id }}', '{{ forest.id }}')"><i class="fas fa-trash"></i> Pašalinti</button>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+    <button type="button" class="btn btn-clear" onclick="confirmDelete('{{ forest.id }}', '{{ forest.id }}')"><i class="fas fa-trash"></i> Pašalinti</button>
     <button onclick="document.getElementById('addPhotoUploadForm').style.display='block'" class="btn btn-clear">
         <i class="fas fa-plus"></i> Įkelti</button>
     
-
     {% if messages %}
     {% for message in messages %}
         <p>{{ message }}</p>
@@ -18,7 +16,7 @@
     {% endif %}
     <div style="height: 1em;"></div>
 
-    <div id="addPhotoUploadForm"  class="forest-add-container" style="display: none;">
+    <div id="addPhotoUploadForm" class="forest-add-container" style="display: none;">
         <form method="post" enctype="multipart/form-data" action="{% url 'image_upload' %}" >
             {% csrf_token %}
             <input type="hidden" name="forest_id" value="{{ forest.id }}">
@@ -36,30 +34,55 @@
         </form>
     </div>
 
-    {% if photos %}
-    <form method="POST" action="{% url 'photos' id=forest.id  %}"id="deleteForm{{ forest.id }}">
+    <form method="POST" action="{% url 'photos' id=forest.id %}" id="deleteForm{{ forest.id }}">
         {% csrf_token %}
-        <ul style="list-style-type: none;"class="forest_images">
+        {% if photos %}
+        <ul style="list-style-type: none;" class="forest_images">
             {% for photo in photos %}
             <li>
-                
-                <input type="checkbox" name="photos_to_delete" value="{{ photo.id }} ">
-                <div class="forest_image" id="deleteForm{{ photos.id }}">
-                <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px" onclick="openModal(this)">
+                <input type="checkbox" name="photos_to_delete" value="{{ photo.id }}">
+                <div class="forest_image" id="deleteForm{{ photo.id }}">
+                    <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px" onclick="openModal(this)">
                 </div>
             </li>
             {% endfor %}
         </ul>
+        {% else %}
+        <p>Šiam miškui nėra nuotraukų.</p>
+        {% endif %}
+
+        <!-- Analyzed Photos Section -->
+        <div class="analyzed-photos-section">
+            <h3>Analizuotos Nuotraukos</h3>
+            <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+            {% if analyzed_photos %}
+            <ul style="list-style-type: none;" class="analyzed_images">
+                {% for analyzed_photo in analyzed_photos %}
+                <li>
+                    <input type="checkbox" name="analyzed_photos_to_delete" value="{{ analyzed_photo.id }}">
+                    <div class="analyzed_image">
+                        <img src="data:image/jpeg;base64,{{ analyzed_photo.image|base64encode }}" 
+                             alt="Analyzed image for {{ forest.name }}" 
+                             width="200px" 
+                             onclick="openModal(this)">
+                        {% if analyzed_photo.analysis_result %}
+                        <p class="analysis-result">Analizės rezultatas: {{ analyzed_photo.analysis_result }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>Nėra analizuotų nuotraukų.</p>
+            {% endif %}
+        </div>
     </form>
-    {% else %}
-    <p>Šiam miškui nėra nuotraukų.</p>
-    {% endif %}
 
     <div id="imageModal" class="modal">
-        <span class="close" onclick="closeModal()">&times;</span>
+        <span class="close" onclick="closeModal()">×</span>
         <img class="modal-content" id="modalImage">
-        <button class="prev" onclick="prevImage()">&#10094;</button>
-        <button class="next" onclick="nextImage()">&#10095;</button>
+        <button class="prev" onclick="prevImage()">❮</button>
+        <button class="next" onclick="nextImage()">❯</button>
     </div>
 
     <div id="overlay" style="display:none;"></div>
@@ -75,9 +98,10 @@
         var deleteFormId;  
 
         function confirmDelete(forestId, formId) {
-            var checkboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
+            var photoCheckboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
+            var analyzedCheckboxes = document.querySelectorAll('input[name="analyzed_photos_to_delete"]:checked');
             
-            if (checkboxes.length === 0) {
+            if (photoCheckboxes.length === 0 && analyzedCheckboxes.length === 0) {
                 return; 
             }
             deleteFormId = formId;
@@ -87,8 +111,6 @@
         }
 
         function submitDelete() {
-            var checkboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
-
             if (deleteFormId) {
                 document.getElementById('deleteForm' + deleteFormId).submit();
             }
@@ -127,36 +149,32 @@
                 }
             });
         });
-        // Function to reset the file input and the file name display
+
         function resetFileInput() {
             const fileInput = document.getElementById('fileInput');
             fileInput.value = '';
-
             const fileNameDisplay = document.getElementById('fileName');
             fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
-
             document.getElementById('addPhotoUploadForm').style.display = 'none';
         }
         
         function submitForm() {
-            var checkboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
-            if (checkboxes.length === 0) {
+            var photoCheckboxes = document.querySelectorAll('input[name="photos_to_delete"]:checked');
+            var analyzedCheckboxes = document.querySelectorAll('input[name="analyzed_photos_to_delete"]:checked');
+            if (photoCheckboxes.length === 0 && analyzedCheckboxes.length === 0) {
                 return; 
             }
             if (confirm('Ar tikrai norite pašalinti šias nuotraukas?')) {
-                document.getElementById('photoForm').submit();
+                document.getElementById('deleteForm{{ forest.id }}').submit();
             }
         }
 
-        //View photo
         let images = [];  
         let currentIndex = 0;
 
         function openModal(imgElement) {
-            images = Array.from(document.querySelectorAll(".forest_image img")).map(img => img.src);
-            
+            images = Array.from(document.querySelectorAll(".forest_image img, .analyzed_image img")).map(img => img.src);
             currentIndex = images.indexOf(imgElement.src);
-            
             document.getElementById("modalImage").src = imgElement.src;
             document.getElementById("imageModal").style.display = "flex";
         }
