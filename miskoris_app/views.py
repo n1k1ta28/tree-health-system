@@ -6,12 +6,19 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Forest, Forest_image, Order, Forest_document
+from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
 from django.utils import timezone
 
 from .forms import CreateUserForm
 
 import json
+
+import base64
+import io
+from PIL import Image
+import numpy as np
+from deepforest import main
+import cv2
 
 # Create your views here.
 
@@ -145,20 +152,32 @@ def forest(request, id):
 def photos(request, id):
     forest = get_object_or_404(Forest, id=id)
     if request.method == 'POST':
+        # Handle deletion of regular photos
         photo_ids = request.POST.getlist('photos_to_delete')
         if photo_ids:
             photo_ids = list(map(int, photo_ids))
             photos_to_delete = Forest_image.objects.filter(id__in=photo_ids)
-            
             photos_to_delete.delete()
-
             messages.success(request, 'Nuotraukos sėkmingai pašalintos!')
 
-        return redirect('photos', id=forest.id)
+        # Handle deletion of analyzed photos
+        analyzed_photo_ids = request.POST.getlist('analyzed_photos_to_delete')
+        if analyzed_photo_ids:
+            analyzed_photo_ids = list(map(int, analyzed_photo_ids))
+            analyzed_photos_to_delete = AnalyzedPhoto.objects.filter(id__in=analyzed_photo_ids)
+            analyzed_photos_to_delete.delete()
+            messages.success(request, 'Analizuotos nuotraukos sėkmingai pašalintos!')
 
-    photos = forest.images.all()  
+        if photo_ids or analyzed_photo_ids:
+            return redirect('photos', id=forest.id)
 
-    return render(request, 'miskoris_app/photos.html', {'forest': forest, 'photos': photos})
+    photos = forest.images.all()
+    analyzed_photos = AnalyzedPhoto.objects.filter(forest=forest)
+    return render(request, 'miskoris_app/photos.html', {
+        'forest': forest,
+        'photos': photos,
+        'analyzed_photos': analyzed_photos
+    })
 
 @login_required(login_url='login')
 def image_upload(request):
@@ -166,19 +185,63 @@ def image_upload(request):
         forest_id = request.POST.get('forest_id')
         forest = get_object_or_404(Forest, id=forest_id)
         images = request.FILES.getlist('images')
-
         allowed_extensions = ('.jpg', '.jpeg', '.png')
 
         for image in images:
             if not image.name.lower().endswith(allowed_extensions):
                 messages.error(request, f"Netinkamas failas: {image.name}. Leidžiami tik JPEG ir PNG!")
-                return render(request, 'miskoris_app/photos.html')
+                return redirect('photos', id=forest_id)
 
+            # Save original photo
             image_data = image.read()
             forest_image = Forest_image(forest=forest, image=image_data)
             forest_image.save()
 
-        messages.success(request, "Nuotraukos įkeltos sėkmingai!")
+            # Process with DeepForest
+            try:
+                img = Image.open(io.BytesIO(image_data)).convert("RGB")
+                img_resized = img.resize((500, 500), Image.Resampling.LANCZOS)
+                image_array = np.array(img_resized)
+
+                predictions = model.predict_image(image=image_array, return_plot=False)
+                
+                if predictions is not None and not predictions.empty:
+                    dry_tree_count = 0
+                    for _, row in predictions.iterrows():
+                        xmin, ymin, xmax, ymax = map(int, [row["xmin"], row["ymin"], row["xmax"], row["ymax"]])
+                        score = row["score"]
+                        is_dry = is_dry_tree(image_array, xmin, ymin, xmax, ymax)
+                        label = "Sausas medis" if is_dry else "Medis"
+                        color = (139, 69, 19) if is_dry else (0, 255, 0)
+                        
+                        cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)
+                        text = f"{label} ({score:.2f})"
+                        cv2.putText(image_array, text, (xmin, ymin - 10),
+                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+                        if is_dry:
+                            dry_tree_count += 1
+
+                    analysis_result = f"Surasta {len(predictions)} medžių, {dry_tree_count} sausų medžių"
+                else:
+                    analysis_result = "Medžių nerasta"
+
+                # Convert annotated image to bytes
+                _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
+                
+                # Save analyzed photo
+                analyzed_photo = AnalyzedPhoto(
+                    forest=forest,
+                    image=buffer.tobytes(),
+                    analysis_result=analysis_result,
+                    original_image=forest_image
+                )
+                analyzed_photo.save()
+
+            except Exception as e:
+                messages.error(request, f"Failed to analyze image {image.name}: {str(e)}")
+                continue
+
+        messages.success(request, "Nuotraukos įkeltos ir išanalizuotos sėkmingai!")
         return redirect('photos', id=forest_id)
 
     return render(request, 'miskoris_app/photos.html')
@@ -300,3 +363,25 @@ def serve_document(request, document_id):
     filename = document.filename if document.filename else f"document_{document_id}"
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
+
+
+# Initialize DeepForest model globally
+model = main.deepforest()
+model.use_release()
+
+def is_dry_tree(image, xmin, ymin, xmax, ymax):
+    """Check for dry trees: less green, more brown, or mixed"""
+    roi = image[ymin:ymax, xmin:xmax]
+    roi_hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
+    roi_rgb = roi
+    mean_saturation = np.mean(roi_hsv[:,:,1])
+    mean_value = np.mean(roi_hsv[:,:,2])
+    mean_r = np.mean(roi_rgb[:,:,0])
+    mean_g = np.mean(roi_rgb[:,:,1])
+    mean_b = np.mean(roi_rgb[:,:,2])
+    is_not_too_green = mean_g < mean_r or mean_g < mean_b or mean_g < 120
+    is_brownish = mean_r > mean_g and mean_r > mean_b and mean_r > 70
+    is_mixed = (mean_r > mean_g) and (mean_r - mean_g < 50) and (mean_g > 50)
+    is_reasonable_saturation = mean_saturation < 100
+    is_reasonable_brightness = 30 < mean_value < 210
+    return (is_not_too_green and (is_brownish or is_mixed)) and (is_reasonable_saturation and is_reasonable_brightness)

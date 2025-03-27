@@ -56,3 +56,13 @@ class Forest_document(models.Model):
 #     name = models.CharField(max_length=100, unique=True)
 #     random_text = models.CharField(max_length=255)
 #     random_float = models.FloatField()    
+
+class AnalyzedPhoto(models.Model):
+    id = models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')
+    forest = models.ForeignKey(Forest, on_delete=models.CASCADE, related_name='analyzed_images')
+    image = models.BinaryField()
+    analysis_result = models.TextField(blank=True, null=True)
+    original_image = models.ForeignKey(Forest_image, on_delete=models.SET_NULL, null=True, blank=True, related_name='analyzed_versions')
+
+    def __str__(self):
+        return f"Analyzed Image for {self.forest.name}"
