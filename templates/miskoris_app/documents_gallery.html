@@ -6,7 +6,7 @@
     <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
     {% for forest in forests %}
     <div class="forest-documents">
-        <h2><a href="{% url 'documents' id=forest.id %}" class="forest-item">{{ forest.name }}</a></h2>
+        <h2><a href="{% url 'documents' id=forest.id %}" class="forest-item">Miškas {{ forest.name }}</a></h2>
         <ul>
             {% for document in forest.documents.all %}
                 <li><a href="{% url 'serve_document' document_id=document.id %}" target="_blank" class="document-link">

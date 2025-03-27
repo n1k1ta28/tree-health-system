@@ -439,7 +439,7 @@ button.btn-clear:hover {
 }
 
 .forest-container {
-    background-color: #f1f1f1; 
+    background-color: #ffffff;
     padding: 0 20px; 
     border-radius: 8px;  
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
@@ -619,6 +619,7 @@ a.document-link:hover {
     color: #1a5f20;
     text-decoration: underline;
 }
+
 
 
 

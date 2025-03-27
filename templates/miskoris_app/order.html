@@ -16,6 +16,16 @@
             {% elif order.status == 'completed' %}
                 Užbaigtas
             {% endif %}
+            <p><strong>Rasta pažeistų medžių:</strong> 
+                {% if order.bad_trees_found %}
+                    Taip
+                {% elif order.status == 'in_progress' %}
+                    -
+                {% elif order.bad_trees_found is False %}
+                    Ne
+                {% else %}
+                    -
+                {% endif %}
         </div>
     </div>
     {% if images %}
