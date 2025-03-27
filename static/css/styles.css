@@ -21,6 +21,7 @@ body {
     text-align: center;
     
 }
+
 header {
     display: flex;
     justify-content: space-between;
@@ -507,8 +508,10 @@ button.btn-clear:hover {
 }
 
 .forest_image:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
+
+
 
 @media (max-width: 768px) {
     .forest_images {

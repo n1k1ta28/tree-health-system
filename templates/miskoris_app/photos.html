@@ -42,9 +42,9 @@
         <ul style="list-style-type: none;"class="forest_images">
             {% for photo in photos %}
             <li>
-                <div class="forest_image" id="deleteForm{{ photos.id }}">
+                
                 <input type="checkbox" name="photos_to_delete" value="{{ photo.id }} ">
-       
+                <div class="forest_image" id="deleteForm{{ photos.id }}">
                 <img src="data:image/jpeg;base64,{{ photo.image|base64encode }}" alt="Image for {{ forest.name }}" width="200px" onclick="openModal(this)">
                 </div>
             </li>
