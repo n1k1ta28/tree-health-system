@@ -3,13 +3,15 @@ from django.http import HttpResponse, JsonResponse
 from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.forms import UserCreationForm 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
 from django.utils import timezone
 
 from .forms import CreateUserForm
+from .decorators import unauthenticated_user
+from .decorators import allowed_users
 
 import json
 
@@ -49,54 +51,60 @@ def about(request):
 #         return render(request, "miskoris_app/login.html", context)
 
 # Prisijungimas su vartotojo vardu arba el. pastu
+@unauthenticated_user
 def loginPage(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    else:
-        if request.method == 'POST':
-            username_or_email = request.POST.get('username')
-            password = request.POST.get('password')
+    if request.method == 'POST':
+        username_or_email = request.POST.get('username')
+        password = request.POST.get('password')
 
-            user = None
+        user = None
 
-            try:
-                user_by_email = User.objects.get(email=username_or_email)
-                user = authenticate(request, username=user_by_email.username, password=password)
-            except User.DoesNotExist:
-                user = authenticate(request, username=username_or_email, password=password)
+        try:
+            user_by_email = User.objects.get(email=username_or_email)
+            user = authenticate(request, username=user_by_email.username, password=password)
+        except User.DoesNotExist:
+            user = authenticate(request, username=username_or_email, password=password)
 
-            if user is not None:
-                login(request, user)
+        if user is not None:
+            login(request, user)
+            
+            if user.is_superuser or user.groups.filter(name='customer').exists():
                 return redirect('forests')
-            else:
-                messages.info(request, 'Neteisingas prisijungimo vardas / el. paštas arba slaptažodis')
+            elif user.groups.filter(name='staff').exists():
+                return redirect('worker_orders')
 
-        context = {}
-        return render(request, "miskoris_app/login.html", context)
+        else:
+            messages.info(request, 'Neteisingas prisijungimo vardas / el. paštas arba slaptažodis')
+
+    context = {}
+    return render(request, "miskoris_app/login.html", context)
 
 def logoutUser(request):
     logout(request)
     return redirect('login')
 
+@unauthenticated_user
 def registerPage(request):
-    if request.user.is_authenticated:
-        return redirect('home')
-    else:
-        form = CreateUserForm()
+    form = CreateUserForm()
 
-        if request.method == 'POST':
-            form = CreateUserForm(request.POST)
-            if form.is_valid():
-                form.save()
-                user = form.cleaned_data.get('username')
-                messages.success(request, 'Sėkmingai sukurta paskyra naudotojui: ' + user)
+    if request.method == 'POST':
+        form = CreateUserForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            username = form.cleaned_data.get('username')
 
-                return redirect('login')
+            group = Group.objects.get(name='customer')
+            user.groups.add(group)
 
-        context = {'form':form}
-        return render(request, "miskoris_app/register.html", context)
+            messages.success(request, 'Sėkmingai sukurta paskyra naudotojui: ' + username)
+
+            return redirect('login')
+
+    context = {'form':form}
+    return render(request, "miskoris_app/register.html", context)
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def forests(request):
     if request.method == 'POST':
         try:
@@ -144,11 +152,13 @@ def forests(request):
 
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def forest(request, id):
     forest = get_object_or_404(Forest, id=id)
     return render(request, "miskoris_app/forest.html", {'forest': forest})
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def photos(request, id):
     forest = get_object_or_404(Forest, id=id)
     if request.method == 'POST':
@@ -180,6 +190,7 @@ def photos(request, id):
     })
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def image_upload(request):
     if request.method == 'POST' and request.FILES.getlist('images'):
         forest_id = request.POST.get('forest_id')
@@ -190,63 +201,20 @@ def image_upload(request):
         for image in images:
             if not image.name.lower().endswith(allowed_extensions):
                 messages.error(request, f"Netinkamas failas: {image.name}. Leidžiami tik JPEG ir PNG!")
-                return redirect('photos', id=forest_id)
+                continue  # Skip invalid files
 
             # Save original photo
             image_data = image.read()
             forest_image = Forest_image(forest=forest, image=image_data)
             forest_image.save()
 
-            # Process with DeepForest
-            try:
-                img = Image.open(io.BytesIO(image_data)).convert("RGB")
-                img_resized = img.resize((500, 500), Image.Resampling.LANCZOS)
-                image_array = np.array(img_resized)
-
-                predictions = model.predict_image(image=image_array, return_plot=False)
-                
-                if predictions is not None and not predictions.empty:
-                    dry_tree_count = 0
-                    for _, row in predictions.iterrows():
-                        xmin, ymin, xmax, ymax = map(int, [row["xmin"], row["ymin"], row["xmax"], row["ymax"]])
-                        score = row["score"]
-                        is_dry = is_dry_tree(image_array, xmin, ymin, xmax, ymax)
-                        label = "Sausas medis" if is_dry else "Medis"
-                        color = (139, 69, 19) if is_dry else (0, 255, 0)
-                        
-                        cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)
-                        text = f"{label} ({score:.2f})"
-                        cv2.putText(image_array, text, (xmin, ymin - 10),
-                                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
-                        if is_dry:
-                            dry_tree_count += 1
-
-                    analysis_result = f"Surasta {len(predictions)} medžių, {dry_tree_count} sausų medžių"
-                else:
-                    analysis_result = "Medžių nerasta"
-
-                # Convert annotated image to bytes
-                _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
-                
-                # Save analyzed photo
-                analyzed_photo = AnalyzedPhoto(
-                    forest=forest,
-                    image=buffer.tobytes(),
-                    analysis_result=analysis_result,
-                    original_image=forest_image
-                )
-                analyzed_photo.save()
-
-            except Exception as e:
-                messages.error(request, f"Failed to analyze image {image.name}: {str(e)}")
-                continue
-
-        messages.success(request, "Nuotraukos įkeltos ir išanalizuotos sėkmingai!")
+        messages.success(request, "Nuotraukos sėkmingai įkeltos!")
         return redirect('photos', id=forest_id)
 
     return render(request, 'miskoris_app/photos.html')
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def mapPage(request):
     forests = Forest.objects.filter(user=request.user)
     
@@ -267,6 +235,7 @@ def mapPage(request):
     return render(request, "miskoris_app/map.html", context)
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def forests_gallery(request):
     user = request.user
 
@@ -281,6 +250,7 @@ def forests_gallery(request):
 
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def orders(request, id):
     forest = get_object_or_404(Forest, id=id)
 
@@ -306,6 +276,7 @@ def orders(request, id):
     return render(request, 'miskoris_app/orders.html', {'forest': forest, 'orders': orders})
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def order(request, forest_id, order_id):
     order = get_object_or_404(Order, id=order_id)
     forest = get_object_or_404(Forest, id=forest_id)
@@ -315,6 +286,7 @@ def order(request, forest_id, order_id):
     return render(request, 'miskoris_app/order.html', {'order': order, 'forest': forest, 'images': images})
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def documents(request, id):
     forest = get_object_or_404(Forest, id=id, user=request.user)
     if request.method == 'POST':
@@ -330,6 +302,7 @@ def documents(request, id):
     return render(request, 'miskoris_app/documents.html', {'forest': forest, 'documents': documents})
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def document_upload(request):
     if request.method == 'POST':
         forest_id = request.POST.get('forest_id')
@@ -351,12 +324,14 @@ def document_upload(request):
     return render(request, 'miskoris_app/documents.html')
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def forests_documents(request):
     user = request.user
     forests = Forest.objects.filter(user=user)
     return render(request, 'miskoris_app/documents_gallery.html', {'forests': forests})
 
 @login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def serve_document(request, document_id):
     document = get_object_or_404(Forest_document, id=document_id)
     response = HttpResponse(document.document, content_type='application/octet-stream')
@@ -364,6 +339,97 @@ def serve_document(request, document_id):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     return response
 
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'staff'])
+def worker_orders(request):
+    #worker = request.user
+    ongoing_orders = Order.objects.filter(status='in_progress') #worke=worker
+
+    if request.method == 'POST' and request.FILES.getlist('images'):
+        order_id = request.POST.get('order_id')
+        order = get_object_or_404(Order, id=order_id, status='in_progress') #worker=worker
+        forest = order.forest
+        images = request.FILES.getlist('images')
+        allowed_extensions = ('.jpg', '.jpeg', '.png')
+
+        for image in images:
+            if not image.name.lower().endswith(allowed_extensions):
+                messages.error(request, f"Netinkamas failas: {image.name}. Leidžiami tik JPEG ir PNG!")
+                return redirect('worker_orders')
+
+            # Save the image linked to the order and forest
+            image_data = image.read()
+            forest_image = Forest_image(forest=forest, order=order, image=image_data)
+            forest_image.save()
+
+        # Update order status to completed
+        order.status = 'completed'
+        order.completed_at = timezone.now()
+        order.bad_trees_found = False  # Default; update this logic if needed
+        order.save()
+
+        messages.success(request, "Nuotraukos sėkmingai įkeltos ir užsakymas užbaigtas!")
+        return redirect('worker_orders')
+
+    context = {
+        'ongoing_orders': ongoing_orders,
+    }
+    return render(request, "miskoris_app/worker_orders.html", context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def analyze_forest_images(request, id):
+    forest = get_object_or_404(Forest, id=id)
+    # Get images that haven't been analyzed yet
+    unanalyzed_images = Forest_image.objects.filter(forest=forest, analyzed_versions__isnull=True)
+
+    for forest_image in unanalyzed_images:
+        try:
+            image_data = forest_image.image
+            img = Image.open(io.BytesIO(image_data)).convert("RGB")
+            img_resized = img.resize((500, 500), Image.Resampling.LANCZOS)
+            image_array = np.array(img_resized)
+
+            predictions = model.predict_image(image=image_array, return_plot=False)
+            
+            if predictions is not None and not predictions.empty:
+                dry_tree_count = 0
+                for _, row in predictions.iterrows():
+                    xmin, ymin, xmax, ymax = map(int, [row["xmin"], row["ymin"], row["xmax"], row["ymax"]])
+                    score = row["score"]
+                    is_dry = is_dry_tree(image_array, xmin, ymin, xmax, ymax)
+                    label = "Sausas medis" if is_dry else "Medis"
+                    color = (139, 69, 19) if is_dry else (0, 255, 0)
+                    
+                    cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)
+                    text = f"{label} ({score:.2f})"
+                    cv2.putText(image_array, text, (xmin, ymin - 10),
+                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+                    if is_dry:
+                        dry_tree_count += 1
+
+                analysis_result = f"Surasta {len(predictions)} medžių, {dry_tree_count} sausų medžių"
+            else:
+                analysis_result = "Medžių nerasta"
+
+            # Convert annotated image to bytes
+            _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
+            
+            # Save analyzed photo
+            analyzed_photo = AnalyzedPhoto(
+                forest=forest,
+                image=buffer.tobytes(),
+                analysis_result=analysis_result,
+                original_image=forest_image
+            )
+            analyzed_photo.save()
+
+        except Exception as e:
+            messages.error(request, f"Nepavyko išanalizuoti nuotraukos ID {forest_image.id}: {str(e)}")
+            continue
+
+    messages.success(request, "Nuotraukos išanalizuotos sėkmingai!")
+    return redirect('photos', id=forest.id)
 
 # Initialize DeepForest model globally
 model = main.deepforest()
