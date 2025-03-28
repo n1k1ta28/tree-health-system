@@ -1,0 +1,109 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% load custom_filters %}
+{% block title %}Darbuotojo tikrinimai{% endblock %}
+
+{% block sidebar_content %}
+    <h2>Darbuotojo tikrinimai</h2>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {% if ongoing_orders %}
+        <table class="forest-table2">
+            <thead>
+                <tr>
+                    <th>Nr.</th>
+                    <th>Miško pavadinimas</th>
+                    <th>Sukūrimo data</th>
+                    <th>Įkelti nuotraukas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in ongoing_orders %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ order.forest.name }}</td>
+                    <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                    <td>
+                        <button onclick="showUploadForm('{{ order.id }}')" class="btn btn-clear">
+                            <i class="fas fa-plus"></i> Įkelti
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Image Upload Forms -->
+        {% for order in ongoing_orders %}
+        <div id="uploadForm{{ order.id }}" class="forest-add-container" style="display: none;">
+            <form method="post" enctype="multipart/form-data" action="{% url 'worker_orders' %}">
+                {% csrf_token %}
+                <input type="hidden" name="order_id" value="{{ order.id }}">
+                <label for="fileInput{{ order.id }}" class="custom-upload-btn">
+                    Pasirinkite nuotraukas <i class="fas fa-upload"></i>
+                </label>
+                <input type="file" name="images" accept=".jpg, .jpeg, .png" id="fileInput{{ order.id }}"
+                       required multiple class="custom-file-input" data-order-id="{{ order.id }}">
+                <div class="file-name" id="fileName{{ order.id }}">Pasirinkta: Nėra pasirinktos nuotraukos</div>
+                <div class="button-group">
+                    <button type="submit" class="btn">Įkelti</button>
+                    <button type="button" onclick="hideUploadForm('{{ order.id }}')" class="btn btn-secondary">
+                        Atšaukti
+                    </button>
+                </div>
+            </form>
+        </div>
+        {% endfor %}
+
+    {% else %}
+        <p>Jūs neturite vykdomų užsakymų.</p>
+    {% endif %}
+
+    <script>
+        function showUploadForm(orderId) {
+            document.getElementById('uploadForm' + orderId).style.display = 'block';
+        }
+
+        function hideUploadForm(orderId) {
+            const fileInput = document.getElementById('fileInput' + orderId);
+            fileInput.value = '';
+            const fileNameDisplay = document.getElementById('fileName' + orderId);
+            fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+            document.getElementById('uploadForm' + orderId).style.display = 'none';
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            document.querySelectorAll('input[type="file"][data-order-id]').forEach(function(fileInput) {
+                fileInput.addEventListener('change', function(event) {
+                    const orderId = event.target.getAttribute('data-order-id');
+                    const fileNameDisplay = document.getElementById('fileName' + orderId);
+                    const fileList = event.target.files;
+                    const allowedExtensions = ['.jpg', '.jpeg', '.png'];
+                    let isValid = true;
+                    let fileNames = Array.from(fileList).map(file => file.name).join(', ');
+
+                    for (let i = 0; i < fileList.length; i++) {
+                        let file = fileList[i];
+                        if (!allowedExtensions.some(ext => file.name.toLowerCase().endsWith(ext))) {
+                            isValid = false;
+                            break;
+                        }
+                    }
+
+                    if (isValid) {
+                        fileNameDisplay.textContent = "Pasirinkta: " + fileNames;
+                    } else {
+                        fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+                        alert('Tik JPG, JPEG ir PNG failai yra leidžiami.');
+                        event.target.value = '';
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

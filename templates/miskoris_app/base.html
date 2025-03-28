@@ -22,7 +22,12 @@
         {% if user.is_authenticated %}
             <span>Sveiki, {{request.user}}</span>            
         {% endif %}
-        <a href="{% url 'forests' %}">Mano miškai</a>
+        {% if user.groups.all.0.name == 'staff' or user.groups.all.0.name == 'admin' %}
+            <a href="{% url 'worker_orders' %}">Mano užsakymai</a>
+        {% endif %}
+        {% if user.groups.all.0.name == 'customer' or user.groups.all.0.name == 'admin' %}
+            <a href="{% url 'forests' %}">Mano miškai</a>
+        {% endif %}
         <a href="{% url 'home' %}">Pagrindinis</a>
         <a href="{% url 'about' %}">Apie</a>
         {% if user.is_authenticated %}
