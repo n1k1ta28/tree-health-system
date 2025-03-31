@@ -16,7 +16,12 @@
 
 <header>
     <div class="header-left">
-        <h1><a href="{% url 'home' %}" style="text-decoration: none; color: inherit;">Miškorius</a></h1>
+        <h1 style="display: flex; align-items: center;">
+            <a href="{% url 'home' %}" style="text-decoration: none; color: inherit; display: flex; align-items: center;">
+                <img src="{% static 'images/trees.png' %}" alt="Miškorius Logo" class="logo">
+                Miškorius
+            </a>
+        </h1>
     </div>
     <div class="header-right">
         {% if user.is_authenticated %}
@@ -43,7 +48,7 @@
     {% block content %}{% endblock %}
 </main>
 <footer>
-    <p>&copy; 2025 Miškorius.</p>
+    <p>&copy; 2025 Miškorius. Visos teisės saugomos</p>
 </footer>
 
 </body>

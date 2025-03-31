@@ -12,7 +12,8 @@
         {% endif %}
 
         {% if user.groups.all.0.name == 'staff' or user.groups.all.0.name == 'admin' %}
-            <a href="{% url 'worker_orders' %}"><i class="fa-solid fa-clipboard-check icon-large"></i> Mano užsakymai</a>
+            <a href="{% url 'worker_orders' %}"><i class="fa-solid fa-clipboard icon-large"></i> Mano užsakymai</a>
+            <a href="{% url 'worker_completed_orders' %}"><i class="fa-solid fa-clipboard-check icon-large"></i> Atlikti užsakymai</a>
         {% endif %}
     </div>
 

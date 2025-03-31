@@ -27,5 +27,6 @@ urlpatterns=[
   path('dokumentai/', views.forests_documents, name='forests_documents'),
   path('dokumentai/<int:document_id>/', views.serve_document, name='serve_document'),
   path('darbuotojo_uzsakymai/', views.worker_orders, name='worker_orders'),
-  path('miskai/<int:id>/analize/', views.analyze_forest_images, name='analyze_forest_images')
+  path('miskai/<int:id>/analize/', views.analyze_forest_images, name='analyze_forest_images'),
+  path('darbuotojo_atlikti_zsakymai/', views.worker_completed_orders, name='worker_completed_orders')
 ]

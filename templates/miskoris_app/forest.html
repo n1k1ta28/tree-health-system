@@ -2,6 +2,19 @@
 {% block title %}Miškas - {{ forest.name }} {% endblock %}
 
 {% block sidebar_content %}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        #map { 
+            height: 300px; 
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+    </style>
+
     <h2>Miškas {{ forest.name }}</h2>
     <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
 
@@ -31,10 +44,40 @@
         <div class="forest-container">
             <h3 class="centered-title">Žemėlapis</h3>
             <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
+            <div id="map"></div>
         </div>
-
     </div>
+    <script>
+        var forestData = JSON.parse('{{ forest_data|escapejs }}');
 
+        if (forestData.polygon_coords.length > 0) {
+            var map = L.map('map').setView([forestData.polygon_coords[0][0], forestData.polygon_coords[0][1]], 10);
+        } else {
+            var map = L.map('map').setView([55.1694, 23.8813], 7);
+        }
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+        }).addTo(map);
+
+        var polygonStyle = {
+            color: '#2ecc71',
+            weight: 2,
+            opacity: 0.8,
+            fillColor: '#27ae60',
+            fillOpacity: 0.3
+        };
+
+        if (forestData.polygon_coords.length > 0) {
+            var polygon = L.polygon(forestData.polygon_coords, polygonStyle).addTo(map);
+            map.fitBounds(polygon.getBounds());
+        } else {
+            L.marker([55.1694, 23.8813]).addTo(map)
+                .bindPopup('Poligonas nerastas.')
+                .openPopup();
+        }
+    </script>
 {% endblock %}
 
 

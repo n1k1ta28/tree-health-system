@@ -9,6 +9,7 @@ body {
     overflow-x: hidden
 }
 .background{
+    position: relative; 
     background-image: url("../images/forest.jpg");
     background-size: cover;
     background-position: center;
@@ -21,7 +22,16 @@ body {
     text-align: center;
     
 }
-
+.background::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); 
+    z-index: 0;
+}
 header {
     display: flex;
     justify-content: space-between;
@@ -80,10 +90,11 @@ footer {
 }
 
 .text-container {
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-    padding: 40px;
-    border-radius: 20px;
+    z-index: 1; 
+    padding: 10px;
+    border-radius: 10px;
     color: white; /* Text color for contrast */
+    font-size: 20px;
 }
 
 /* Main container to align sidebar and content horizontally */
@@ -444,7 +455,7 @@ button.btn-clear:hover {
     padding: 0 20px; 
     border-radius: 8px;  
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-    width: 40%;  
+    width: 45%;  
    
 }
 
@@ -623,6 +634,88 @@ a.document-link:hover {
     text-decoration: underline;
 }
 
+
+.about-container, .pricing-container {
+    padding: 30px;
+    text-align: center;
+}
+
+.left-column {
+    display: flex;
+    align-items: flex-start;
+    gap: 70px;
+    padding: 50px;
+}
+.about-container h3, .pricing-container h3, .left-column h3 {
+    font-size: 2em;
+    margin-bottom: 1%;
+    color: #333;
+}
+
+.pricing-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.pricing-column {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    width: 25%;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.pricing-column h4 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #459c2b;
+}
+
+.pricing-column .price {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #2f4858;
+    margin-bottom: 15px;
+}
+
+.pricing-column p {
+    font-size: 1em;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.pricing-column:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+}
+
+.logo {
+    height: 1.1em;
+    width: auto;
+    filter: invert(100%); 
+    display: inline-block;
+    position: relative;
+    transform: rotate(270deg);
+}
+
+
+.text-content {
+    width: 50%;
+    text-align: left;
+}
+
+.right-image {
+    width: 40%;
+    max-width: 400px;
+    height: auto;
+}
 
 
 

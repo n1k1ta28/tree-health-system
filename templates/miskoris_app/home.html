@@ -7,7 +7,43 @@
 {% block content %}
 <div class="background">
     <section class="text-container">
-        <h2>Sveiki atvykę į Miškorių!</h2>
+        <h1>Sveiki atvykę į Miškorių!</h1>
+        <p>Mūsų tikslas yra palengvinti miško savininkų gyvenimus, padedant jiems greitai aptikti blogus medžius.</p>
     </section>
 </div>
+
+<section class="about-container">
+    <h3>Kaip Tai Veikia?</h3>
+    <p>Galite užsakyti paslaugą, kad su dronu būtų padarytos ir išanalizuojamos jūsų miško nuotraukos. Taip pat patys galite įkelti dronu fotografuotas miško nuotraukas, kurias išanalizuos mūsų sukurtas algoritmas</p>
+</section>
+
+
+<section class="pricing-container">
+    <h3>Paslaugų Kainos</h3>
+    <div class="pricing-columns">
+        <div class="pricing-column">
+            <h4>Vienkartinė analizė</h4>
+            <p class="price">€75</p>
+            <p>Vienkartinis miško patikrinimas.</p>
+        </div>
+        <div class="pricing-column">
+            <h4>Pusmečio analizė</h4>
+            <p class="price">€140</p>
+            <p>Po vieną patikrą kas pusmetį, visus metus</p>
+        </div>
+        <div class="pricing-column">
+            <h4>Mėnesinė analizė</h4>
+            <p class="price">€450</p>
+            <p>Miško patikra kas mėnesį, 6 mėnesius.</p>
+        </div>
+    </div>
+</section>
+
+<section class="left-column">
+    <div class="text-content">
+        <h3>Sprendimai Jūsų Miškui</h3>
+        <p>Reikia sugalvoti random teksta apie tai, kokie mes esam nuostabusssss</p>
+    </div>
+    <img src="{% static 'images/drone.jpg' %}" alt="Forest Image" class="right-image">
+</section>
 {% endblock %}

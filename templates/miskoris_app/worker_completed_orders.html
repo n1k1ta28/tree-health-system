@@ -1,0 +1,44 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% load custom_filters %}
+{% block title %}Darbuotojo tikrinimai{% endblock %}
+
+{% block sidebar_content %}
+    <h2>Darbuotojo atlikti tikrinimai</h2>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {% if completed_orders %}
+        <table class="forest-table2">
+            <thead>
+                <tr>
+                    <th>Nr.</th>
+                    <th>Miško pavadinimas</th>
+                    <th>Adresas</th>
+                    <th>Sukūrimo data</th>
+                    <th>Tikrinimo data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in completed_orders %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ order.forest.name }}</td>
+                    <td>{{ order.forest.address }}</td>
+                    <td>{{ order.created_at|date:"Y-m-d" }}</td>
+                    <td>{{ order.completed_at|date:"Y-m-d" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <p>Jūs neturite atliktų užsakymų.</p>
+    {% endif %}
+
+
+{% endblock %}

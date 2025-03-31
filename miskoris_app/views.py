@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
 from django.utils import timezone
+from django.utils.safestring import mark_safe
 
 from .forms import CreateUserForm
 from .decorators import unauthenticated_user
@@ -155,7 +156,20 @@ def forests(request):
 @allowed_users(allowed_roles=['admin', 'customer'])
 def forest(request, id):
     forest = get_object_or_404(Forest, id=id)
-    return render(request, "miskoris_app/forest.html", {'forest': forest})
+
+    polygon_coords = forest.polygon_coords or []  
+
+    forest_data = json.dumps({
+        "id": forest.id,
+        "name": forest.name,
+        "polygon_coords": polygon_coords,  
+    })
+
+    context = {
+        "forest": forest,
+        "forest_data": mark_safe(forest_data) 
+    }
+    return render(request, "miskoris_app/forest.html", context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
@@ -375,6 +389,16 @@ def worker_orders(request):
         'ongoing_orders': ongoing_orders,
     }
     return render(request, "miskoris_app/worker_orders.html", context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'staff'])
+def worker_completed_orders(request):
+    completed_orders = Order.objects.filter(status='completed') 
+
+    context = {
+        'completed_orders': completed_orders,
+    }
+    return render(request, "miskoris_app/worker_completed_orders.html", context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
