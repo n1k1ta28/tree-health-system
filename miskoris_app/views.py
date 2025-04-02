@@ -9,7 +9,7 @@ from django.contrib import messages
 from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
 from django.utils import timezone
 from django.utils.safestring import mark_safe
-
+import re
 from .forms import CreateUserForm
 from .decorators import unauthenticated_user
 from .decorators import allowed_users
@@ -157,6 +157,29 @@ def forests(request):
 def forest(request, id):
     forest = get_object_or_404(Forest, id=id)
 
+    latest_completed_order = (
+        forest.orders.filter(status="completed", completed_at__isnull=False)
+        .order_by("-completed_at")
+        .first()
+    )
+
+    latest_completed_date = latest_completed_order.completed_at if latest_completed_order else None
+
+    # Check if any AnalyzedPhoto has dry trees
+    analyzed_photos = AnalyzedPhoto.objects.filter(forest=forest)
+
+    has_dry_trees = "Ne" 
+    dry_tree_pattern = re.compile(r"(\d+)\s+sausų\s+medžių")
+
+    for photo in analyzed_photos:
+        if photo.analysis_result:
+            match = dry_tree_pattern.search(photo.analysis_result)
+            if match:
+                dry_tree_count = int(match.group(1))
+                if dry_tree_count > 0:
+                    has_dry_trees = "Taip"
+                    break  
+
     polygon_coords = forest.polygon_coords or []  
 
     forest_data = json.dumps({
@@ -167,7 +190,9 @@ def forest(request, id):
 
     context = {
         "forest": forest,
-        "forest_data": mark_safe(forest_data) 
+        "forest_data": mark_safe(forest_data),
+        "latest_completed_date": latest_completed_date,
+        "has_dry_trees": has_dry_trees,
     }
     return render(request, "miskoris_app/forest.html", context)
 
