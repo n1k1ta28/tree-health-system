@@ -6,13 +6,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
-from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 import re
 from .forms import CreateUserForm
 from .decorators import unauthenticated_user
 from .decorators import allowed_users
+from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
 
 import json
 
@@ -52,6 +52,19 @@ def about(request):
 #         return render(request, "miskoris_app/login.html", context)
 
 # Prisijungimas su vartotojo vardu arba el. pastu
+
+@login_required(login_url='login')
+def redirect_after_login(request):
+    if request.user.is_superuser or request.user.groups.filter(name='customer').exists():
+        return redirect('forests')
+    elif request.user.groups.filter(name='staff').exists():
+        return redirect('worker_orders')
+    else:
+        return redirect('home')
+
+def redirect_after_cancellation(request):
+        return redirect('login')
+
 @unauthenticated_user
 def loginPage(request):
     if request.method == 'POST':
@@ -68,12 +81,10 @@ def loginPage(request):
 
         if user is not None:
             login(request, user)
-            
             if user.is_superuser or user.groups.filter(name='customer').exists():
                 return redirect('forests')
             elif user.groups.filter(name='staff').exists():
                 return redirect('worker_orders')
-
         else:
             messages.info(request, 'Neteisingas prisijungimo vardas / el. paštas arba slaptažodis')
 

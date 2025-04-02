@@ -1,5 +1,6 @@
 {% extends 'miskoris_app/base.html' %}
 {% load static %}
+{% load socialaccount %}
 
 {% block title %}Prisijungimas{% endblock %}
 
@@ -13,11 +14,11 @@
         {% endfor %}
 
         {% if form.errors %}
-                {% for field, errors in form.errors.items %}
-                    {% for error in errors %}
-                        <p id="errors">{{ error }}</p>
-                    {% endfor %}
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p id="errors">{{ error }}</p>
                 {% endfor %}
+            {% endfor %}
         {% endif %}
 
         <form method="POST" action="">
@@ -33,8 +34,17 @@
             <input type="submit" value="Prisijungti" name="Login" class="btn btn-primary">
         </form>
 
+        <a href="{% provider_login_url 'google' %}" class="btn btn-google">
+            <span class="btn-content">
+                <img src="{% static 'images/google-logo.png' %}" alt="Google logo" class="google-logo">
+                Prisijungti su Google
+            </span>
+        </a>
+
+
         <p>Neturite paskyros? <a href="{% url 'register' %}">Registruotis</a></p>
         <p>Pamiršote slaptažodį? <a href="{% url 'reset_password' %}">Atstatyti</a></p>
     </div>
 </div>
+
 {% endblock %}

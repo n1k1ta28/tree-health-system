@@ -9,6 +9,7 @@ body {
     overflow-x: hidden
 }
 .background{
+    position: relative; 
     background-image: url("../images/forest.jpg");
     background-size: cover;
     background-position: center;
@@ -20,6 +21,16 @@ body {
     color: white; /* Adjust text color for visibility */
     text-align: center;
     
+}
+.background::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5); 
+    z-index: 0;
 }
 header {
     display: flex;
@@ -79,10 +90,11 @@ footer {
 }
 
 .text-container {
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
-    padding: 40px;
-    border-radius: 20px;
+    z-index: 1; 
+    padding: 10px;
+    border-radius: 10px;
     color: white; /* Text color for contrast */
+    font-size: 20px;
 }
 
 /* Main container to align sidebar and content horizontally */
@@ -132,6 +144,13 @@ footer {
     transition: 0.3s;
 }
 
+.btn-link {
+    background-color: #2f4858 !important;
+    color: white;
+}
+.btn-link:hover {
+    background-color: #38576a!important;
+}
 .btn:hover {
     background-color: #195f1e;
 }
@@ -439,11 +458,11 @@ button.btn-clear:hover {
 }
 
 .forest-container {
-    background-color: #f1f1f1; 
+    background-color: #ffffff;
     padding: 0 20px; 
     border-radius: 8px;  
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); 
-    width: 40%;  
+    width: 45%;  
    
 }
 
@@ -455,7 +474,7 @@ button.btn-clear:hover {
 
 .centered-title {
     text-align: center;
-    color: #2f4858;
+    color: #000000;
 }
 
 .form-container {
@@ -507,8 +526,10 @@ button.btn-clear:hover {
 }
 
 .forest_image:hover {
-    transform: scale(1.05);
+    transform: scale(1.02);
 }
+
+
 
 @media (max-width: 768px) {
     .forest_images {
@@ -611,14 +632,194 @@ button.btn-clear:hover {
 }
 
 a.document-link {
-    color: #217e27;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #244819;
+    font-weight: 600;
     text-decoration: none;
+    padding: 8px 12px;
+    border: 2px solid #244819;;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+    margin-bottom: 15px; 
 }
 
 a.document-link:hover {
-    color: #1a5f20;
-    text-decoration: underline;
+    color: white;
+    background-color: #244819;
+    text-decoration: none;
+    transform: translateY(-2px);
+}
+
+a.document-link svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
 }
 
 
+.about-container, .pricing-container {
+    padding: 30px;
+    text-align: center;
+}
 
+.left-column {
+    display: flex;
+    align-items: flex-start;
+    gap: 70px;
+    padding: 50px;
+}
+.about-container h3, .pricing-container h3, .left-column h3 {
+    font-size: 2em;
+    margin-bottom: 1%;
+    color: #333;
+}
+
+.pricing-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.pricing-column {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    width: 25%;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    overflow: hidden;
+}
+
+.pricing-column h4 {
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: #459c2b;
+}
+
+.pricing-column .price {
+    font-size: 2.5em;
+    font-weight: 700;
+    color: #2f4858;
+    margin-bottom: 15px;
+}
+
+.pricing-column p {
+    font-size: 1em;
+    color: #666;
+    margin-bottom: 20px;
+}
+
+.pricing-column:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+}
+
+.logo {
+    height: 1.1em;
+    width: auto;
+    filter: invert(100%); 
+    display: inline-block;
+    position: relative;
+    transform: rotate(270deg);
+}
+
+.text-content {
+    width: 50%;
+    text-align: left;
+}
+
+.right-image {
+    width: 40%;
+    max-width: 400px;
+    height: auto;
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 15px;
+    height: 15px;
+    border: 1px solid #244819;
+    border-radius: 5px;
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+    background-color: white;
+    transition: all 0.3s;
+}
+
+input[type="checkbox"]:checked {
+    background-color: #244819;
+    border-color: #244819;
+}
+
+input[type="checkbox"]::before {
+    content: "✔";
+    font-size: 10px;
+    color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    transition: all 0.3s;
+}
+
+input[type="checkbox"]:checked::before {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.btn-content {
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes movingStripes {
+    0% {
+        background-position: 0 0;
+    }
+    100% {
+        background-position: 500px 0;
+    }
+}
+
+.register-container .btn-google {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 14px;
+    font-size: 20px;
+    box-sizing: border-box;
+    background: linear-gradient(
+        -45deg,
+        #34A853 0%,
+        #34A853 10%,
+        #4285F4 25%,
+        #EA4335 50%,
+        #FBBC04 75%,
+        #34A853 90%,
+        #34A853 100%
+    );
+    background-size: 500px 54px;
+    border: 1px solid #34A853;
+    color: white;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+    transition: background-position 0.5s ease;
+}
+
+.register-container .btn-google:hover {
+    animation: movingStripes 2s linear infinite;
+}
+
+.google-logo {
+    width: 20px;
+    margin-right: 10px;
+}
