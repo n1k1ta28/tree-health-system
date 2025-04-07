@@ -1,15 +1,15 @@
 ﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.core.files.storage import FileSystemStorage
-from django.contrib.auth.forms import UserCreationForm 
+from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
 import re
-from .forms import CreateUserForm
+from .forms import CreateUserForm, CustomPasswordChangeForm
 from .decorators import unauthenticated_user
 from .decorators import allowed_users
 from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
@@ -52,6 +52,37 @@ def about(request):
 #         return render(request, "miskoris_app/login.html", context)
 
 # Prisijungimas su vartotojo vardu arba el. pastu
+
+@login_required(login_url='login')
+def profile(request):
+    user = request.user
+    # Determine the user's role
+    if user.is_superuser:
+        role = 'administrarotius'
+    elif user.groups.exists():
+        if user.groups.first().name == 'customer':
+            role = 'klientas'
+        if user.groups.first().name == 'staff':
+            role = 'darbuotojas'
+    else:
+        role = 'nežinoma'  # Fallback, though unlikely due to registration logic
+
+    if request.method == 'POST':
+        form = CustomPasswordChangeForm(user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)  # Keep user logged in
+            messages.success(request, 'Slaptažodis sėkmingai pakeistas!')
+            return redirect('profile')
+        # If form is invalid, errors will be displayed in the template
+    else:
+        form = CustomPasswordChangeForm(user)
+
+    context = {
+        'role': role,
+        'form': form,
+    }
+    return render(request, 'miskoris_app/profile.html', context)
 
 @login_required(login_url='login')
 def redirect_after_login(request):

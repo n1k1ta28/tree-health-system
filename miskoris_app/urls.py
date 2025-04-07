@@ -33,4 +33,5 @@ urlpatterns=[
   path('redirect_after_login/', views.redirect_after_login, name='redirect_after_login'),
   path('accounts/3rdparty/login/cancelled/', RedirectView.as_view(url='/prisijungimas/')),
   path('accounts/', include('allauth.urls')),
+  path('profile/', views.profile, name='profile')
 ]
