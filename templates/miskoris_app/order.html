@@ -7,15 +7,14 @@
     <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
 
     <div class="forest-content">
-        <div class="forest-container">
-            <h3 class="centered-title">Aprašymas</h3>
-            <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
+        
             <p><strong>Statusas:</strong> 
             {% if order.status == 'in_progress' %}
                 Vykdomas
             {% elif order.status == 'completed' %}
                 Užbaigtas
             {% endif %}
+            <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
             <p><strong>Rasta pažeistų medžių:</strong> 
                 {% if order.bad_trees_found %}
                     Taip
@@ -26,7 +25,7 @@
                 {% else %}
                     -
                 {% endif %}
-        </div>
+       
     </div>
     {% if images %}
     <h3>Nuotraukos</h3>

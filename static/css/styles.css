@@ -676,6 +676,10 @@ a.document-link svg {
     color: #333;
 }
 
+.left-column p {
+    font-size: 1.2em;
+}
+
 .pricing-columns {
     display: flex;
     justify-content: space-between;

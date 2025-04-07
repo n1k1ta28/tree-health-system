@@ -34,7 +34,6 @@
             <a href="{% url 'forests' %}">Mano miškai</a>
         {% endif %}
         <a href="{% url 'home' %}">Pagrindinis</a>
-        <a href="{% url 'about' %}">Apie</a>
         {% if user.is_authenticated %}
             <a href="{% url 'logout' %}">Atsijungti</a>
         {% else %}
