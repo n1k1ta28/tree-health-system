@@ -25,7 +25,7 @@
     </div>
     <div class="header-right">
         {% if user.is_authenticated %}
-            <span>Sveiki, {{request.user}}</span>            
+        <a href="{% url 'profile' %}" style="color: grey;">Sveiki, {{request.user}}</a>        
         {% endif %}
         {% if user.groups.all.0.name == 'staff' or user.groups.all.0.name == 'admin' %}
             <a href="{% url 'worker_orders' %}">Mano užsakymai</a>

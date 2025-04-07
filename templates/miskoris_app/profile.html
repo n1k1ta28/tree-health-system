@@ -1,0 +1,48 @@
+{% extends 'miskoris_app/base.html' %}
+{% load static %}
+
+{% block title %}Profilis{% endblock %}
+
+{% block content %}
+<div class="registration-background-container">
+    <div class="register-container">
+        <h2>Profilis</h2>
+        <p><strong>Vartotojo vardas:</strong> {{ user.username }}</p>
+        <p><strong>El. paštas:</strong> {{ user.email }}</p>
+        <p><strong>Rolė:</strong> {{ role }}</p>
+
+        <h2>Keisti slaptažodį</h2>
+        
+        {% for message in messages %}
+            <p id="messages">{{ message }}</p>
+        {% endfor %}
+
+        {% if form.errors %}
+                {% for field, errors in form.errors.items %}
+                    {% for error in errors %}
+                        <p id="errors">{{ error }}</p>
+                    {% endfor %}
+                {% endfor %}
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="{{ form.old_password.id_for_label }}">Dabartinis slaptažodis</label>
+                {{ form.old_password }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.new_password1.id_for_label }}">Naujas slaptažodis</label>
+                {{ form.new_password1 }}
+            </div>
+            <div class="form-group">
+                <label for="{{ form.new_password2.id_for_label }}">Pakartokite naują slaptažodį</label>
+                {{ form.new_password2 }}
+            </div>
+            <input type="submit" value="Keisti slaptažodį" class="btn btn-primary">
+        </form>
+        <p>Pamiršote slaptažodį? <a href="{% url 'reset_password' %}">Atstatyti per el. paštą</a></p>
+    </div>
+</div>
+</style>
+{% endblock %}
