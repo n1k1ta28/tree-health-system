@@ -39,6 +39,8 @@ class Forest_image(models.Model):
     forest = models.ForeignKey(Forest, on_delete=models.CASCADE, related_name='images')
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='images', null=True, blank=True)
     image = models.BinaryField()
+    latitude = models.FloatField(null=True, blank=True)  
+    longitude = models.FloatField(null=True, blank=True)  
 
     def __str__(self):
         return f"Image for {self.forest.name} (Order ID: {self.order.id if self.order else 'None'})"

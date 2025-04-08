@@ -18,7 +18,7 @@ import json
 
 import base64
 import io
-from PIL import Image
+from PIL import Image, ExifTags
 import numpy as np
 from deepforest import main
 import cv2
@@ -282,17 +282,73 @@ def image_upload(request):
         for image in images:
             if not image.name.lower().endswith(allowed_extensions):
                 messages.error(request, f"Netinkamas failas: {image.name}. Leidžiami tik JPEG ir PNG!")
-                continue  # Skip invalid files
+                continue
 
-            # Save original photo
             image_data = image.read()
+
+            try:
+                img = Image.open(io.BytesIO(image_data))
+                exif_data = img._getexif()
+                lat, lon = None, None
+                if exif_data:
+                    gps_info = exif_data.get(34853)
+                    if gps_info:
+                        lat = convert_to_degrees(gps_info.get(2)) 
+                        lat_ref = gps_info.get(1)
+                        lon = convert_to_degrees(gps_info.get(4))  
+                        lon_ref = gps_info.get(3) 
+                        if lat and lat_ref and lon and lon_ref:
+                            lat = lat if lat_ref == 'N' else -lat
+                            lon = lon if lon_ref == 'E' else -lon
+            except Exception as e:
+                print(f"Failed to extract GPS data for {image.name}: {e}")
+                lat, lon = None, None
+
             forest_image = Forest_image(forest=forest, image=image_data)
+            if lat and lon:
+                forest_image.latitude = lat
+                forest_image.longitude = lon
             forest_image.save()
 
         messages.success(request, "Nuotraukos sėkmingai įkeltos!")
         return redirect('photos', id=forest_id)
 
     return render(request, 'miskoris_app/photos.html')
+
+def convert_to_degrees(value):
+    """Convert GPS coordinates from (degrees, minutes, seconds) to decimal degrees."""
+    if not value or len(value) != 3:
+        return None
+    d, m, s = value
+    return d + (m / 60.0) + (s / 3600.0)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def dry_trees_map(request, id):
+    forest = get_object_or_404(Forest, id=id)
+    analyzed_photos = AnalyzedPhoto.objects.filter(forest=forest)
+    
+    dry_tree_locations = []
+    for photo in analyzed_photos:
+        if photo.analysis_result:
+            match = re.search(r"(\d+)\s+sausų\s+medžių", photo.analysis_result)
+            if match:
+                dry_tree_count = int(match.group(1))
+                if dry_tree_count > 0 and photo.original_image:
+                    lat = photo.original_image.latitude
+                    lon = photo.original_image.longitude
+                    if lat and lon:
+                        dry_tree_locations.append({
+                            'lat': lat,
+                            'lng': lon,
+                            'count': dry_tree_count
+                        })
+    
+    context = {
+        'forest': forest,
+        'dry_tree_locations': json.dumps(dry_tree_locations)
+    }
+    return render(request, 'miskoris_app/dry_trees_map.html', context)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
