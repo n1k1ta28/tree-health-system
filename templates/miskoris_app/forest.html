@@ -33,7 +33,7 @@
             <hr style="border: 1px solid rgb(192, 192, 192); margin: 1px 0;">
             <p>Ar yra pažeistų medžių:  {{ has_dry_trees }}</p>
             <p><a href="{% url 'photos' id=forest.id %}" class="btn btn-link">Nuotraukos</a></p>
-            <p><a  class="btn btn-link">Pažeisti medžiai</a></p>
+            <p><a href="{% url 'dry_trees_map' id=forest.id %}" class="btn btn-link">Pažeisti medžiai</a></p>
         </div>
         <div class="forest-container">
             <h3 class="centered-title">Tikrinimai</h3>
