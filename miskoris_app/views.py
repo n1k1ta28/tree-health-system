@@ -22,6 +22,7 @@ from PIL import Image, ExifTags
 import numpy as np
 from deepforest import main
 import cv2
+from scipy.stats import entropy
 
 # Create your views here.
 
@@ -537,6 +538,7 @@ def analyze_forest_images(request, id):
             img_resized = img.resize((500, 500), Image.Resampling.LANCZOS)
             image_array = np.array(img_resized)
 
+            # Use the original image without enhancement
             predictions = model.predict_image(image=image_array, return_plot=False)
             
             if predictions is not None and not predictions.empty:
@@ -582,19 +584,63 @@ def analyze_forest_images(request, id):
 model = main.deepforest()
 model.use_release()
 
+
 def is_dry_tree(image, xmin, ymin, xmax, ymax):
-    """Check for dry trees: less green, more brown, or mixed"""
+    """Check if a tree is dry with balanced green color detection."""
+    # Extract the region of interest (ROI)
     roi = image[ymin:ymax, xmin:xmax]
+    
+    # Convert to HSV color space
     roi_hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
-    roi_rgb = roi
-    mean_saturation = np.mean(roi_hsv[:,:,1])
-    mean_value = np.mean(roi_hsv[:,:,2])
-    mean_r = np.mean(roi_rgb[:,:,0])
-    mean_g = np.mean(roi_rgb[:,:,1])
-    mean_b = np.mean(roi_rgb[:,:,2])
-    is_not_too_green = mean_g < mean_r or mean_g < mean_b or mean_g < 120
-    is_brownish = mean_r > mean_g and mean_r > mean_b and mean_r > 70
-    is_mixed = (mean_r > mean_g) and (mean_r - mean_g < 50) and (mean_g > 50)
-    is_reasonable_saturation = mean_saturation < 100
-    is_reasonable_brightness = 30 < mean_value < 210
-    return (is_not_too_green and (is_brownish or is_mixed)) and (is_reasonable_saturation and is_reasonable_brightness)
+    
+    # Define HSV color ranges for dry trees (brown, yellow, and gray)
+    brown_lower = np.array([0, 10, 20])    # Hue: 0-25 (brown), Sat: 10-150, Val: 20-200
+    brown_upper = np.array([25, 150, 200])
+    yellow_lower = np.array([25, 10, 20])  # Hue: 25-45 (pale yellow/beige), Sat: 10-150, Val: 20-200
+    yellow_upper = np.array([45, 150, 200])
+    gray_lower = np.array([0, 0, 20])      # Hue: 0-360 (gray), Sat: 0-40, Val: 20-200
+    gray_upper = np.array([360, 40, 200])
+    
+    # Define balanced HSV range for healthy green trees
+    green_lower = np.array([42, 25, 25])   # Hue: 42-125 (balanced green range), Sat: 25-255, Val: 25-255
+    green_upper = np.array([125, 255, 255])
+    
+    # Create masks for brown, yellow, gray, and green pixels
+    brown_mask = cv2.inRange(roi_hsv, brown_lower, brown_upper)
+    yellow_mask = cv2.inRange(roi_hsv, yellow_lower, yellow_upper)
+    gray_mask = cv2.inRange(roi_hsv, gray_lower, gray_upper)
+    green_mask = cv2.inRange(roi_hsv, green_lower, green_upper)
+    
+    # Combine brown, yellow, and gray masks to detect dry pixels
+    dry_mask = cv2.bitwise_or(brown_mask, yellow_mask)
+    dry_mask = cv2.bitwise_or(dry_mask, gray_mask)
+    
+    # Calculate percentages of dry and green pixels
+    total_pixels = roi.shape[0] * roi.shape[1]
+    dry_pixel_count = np.sum(dry_mask > 0)
+    green_pixel_count = np.sum(green_mask > 0)
+    
+    dry_percentage = (dry_pixel_count / total_pixels) * 100 if total_pixels > 0 else 0
+    green_percentage = (green_pixel_count / total_pixels) * 100 if total_pixels > 0 else 0
+    
+    # Calculate mean HSV values
+    mean_hue = np.mean(roi_hsv[:, :, 0])
+    mean_saturation = np.mean(roi_hsv[:, :, 1])
+    mean_value = np.mean(roi_hsv[:, :, 2])
+    
+    # Adjusted criteria for classifying a tree as dry:
+    # 1. At least 15% of pixels must be in dry color ranges
+    # 2. Less than 4% of pixels can be green (balanced threshold)
+    # 3. At least 20 dry pixels to avoid noise in small ROIs
+    primary_condition = (dry_percentage > 15) and (green_percentage < 4) and (dry_pixel_count > 20)
+    
+    # Fallback check using mean HSV values
+    fallback_condition = (mean_hue < 45) and (mean_saturation < 100) and (20 < mean_value < 200)
+    
+    # Classify as dry if either the primary or fallback condition is met
+    is_dry = primary_condition or (fallback_condition and green_percentage < 4)
+    
+    # Print debug information to diagnose issues
+    print(f"ROI ({xmin}, {ymin}, {xmax}, {ymax}): Dry %: {dry_percentage:.2f}, Green %: {green_percentage:.2f}, Dry Pixels: {dry_pixel_count}, Mean Hue: {mean_hue:.2f}, Mean Sat: {mean_saturation:.2f}, Is Dry: {is_dry}")
+    
+    return is_dry
