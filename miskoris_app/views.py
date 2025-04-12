@@ -392,6 +392,8 @@ def forests_gallery(request):
 def orders(request, id):
     forest = get_object_or_404(Forest, id=id)
 
+    orders = Order.objects.filter(forest=forest)
+
     if request.method == 'POST':
         forest_id = request.POST.get('forest_id')
         worker_id = 1
@@ -407,9 +409,7 @@ def orders(request, id):
         )
 
         messages.success(request, "Tikrinimas užsakytas!")
-
-    orders = Order.objects.filter(forest=forest)
-
+        return redirect('orders', id=forest.id)
 
     return render(request, 'miskoris_app/orders.html', {'forest': forest, 'orders': orders})
 

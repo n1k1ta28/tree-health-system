@@ -5,8 +5,8 @@
 {% block sidebar_content %}
     <h1>Tikrinimai  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h1>
     <hr style="border: 1px solid rgb(192, 192, 192);; margin: 20px 0;">
-    <button onclick="confirmOrder()" class="btn btn-clear">
-        <i class="fas fa-plus"></i> Užsakyti tikrinimą</button>
+    <button id="orderButton" onclick="confirmOrder()" class="btn btn-clear" data-forest-size="{{ forest.area }}">
+        <i class="fas fa-plus" ></i> Užsakyti tikrinimą</button>
     
 
     {% if messages %}
@@ -84,6 +84,7 @@
     <div id="overlay" style="display:none;"></div>
     <div id="confirmationDialog" style="display:none;"class="forest-add-container">
         <p>Ar tikrai norite užsakyti tikrinimą?</p>
+        <p class="price-info"><strong>Kaina:</strong> skaičiuojama...</p>
         <div class="button-group">
         <button onclick="submitOrder()" class="btn">Taip</button>
         <button onclick="cancelOrder()" class="btn btn-secondary">Ne</button>
@@ -92,8 +93,31 @@
 
     <script>
         function confirmOrder() {
+
+            const forestSize = parseFloat(document.getElementById('orderButton').dataset.forestSize);
+            let  calculatedPrice  = 70;
+            if (forestSize > 20 )
+            {
+                calculatedPrice = 90;
+            }
+            else if (forestSize >= 40)
+            {
+                calculatedPrice = 120;
+            }
+            else if (forestSize >= 80)
+            {
+                calculatedPrice = 170;
+            }
+            else if (forestSize >= 150)
+            {
+                calculatedPrice = 230;
+            }
+
+            document.querySelector('#confirmationDialog .price-info').innerText = `Kaina: €${calculatedPrice.toFixed(2)}`;
+
             document.getElementById('overlay').style.display = 'block';
             document.getElementById('confirmationDialog').style.display = 'block';
+            
         }
     
         function submitOrder() {
