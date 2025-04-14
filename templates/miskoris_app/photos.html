@@ -6,15 +6,22 @@
     <h1>Nuotraukos  <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h1>
     <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
     <button type="button" class="btn btn-clear" onclick="confirmDelete('{{ forest.id }}', '{{ forest.id }}')"><i class="fas fa-trash"></i> Pašalinti</button>
+
+    {% if photos_uploaded_by_user < 20 %}
     <button onclick="document.getElementById('addPhotoUploadForm').style.display='block'" class="btn btn-clear">
         <i class="fas fa-plus"></i> Įkelti</button>
-        <form method="post" action="{% url 'analyze_forest_images' id=forest.id %}">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-clear">
-                <i class="fas fa-cogs"></i> Analizuoti
-            </button>
-        </form>
-    
+    {% else %}
+        <button class="btn btn-clear" disabled title="Galite įkelti tik 20 nuotraukų.">
+            <i class="fas fa-plus"></i> Įkelti (limitas pasiektas)
+        </button>
+    {% endif %}
+    <form method="post" action="{% url 'analyze_forest_images' id=forest.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-clear">
+            <i class="fas fa-cogs"></i> Analizuoti
+        </button>
+    </form>
+
     {% if messages %}
     {% for message in messages %}
         <p>{{ message }}</p>
@@ -101,6 +108,8 @@
     </div>
 
     <script>
+        const existingPhotoCount = parseInt("{{ photos_uploaded_by_user|default:0 }}");
+
         var deleteFormId;  
 
         function confirmDelete(forestId, formId) {
@@ -144,6 +153,13 @@
                         isValid = false;
                         break;
                     }
+                }
+                
+                if (fileList.length + existingPhotoCount > 3) {
+                    alert('Galite įkelti ne daugiau nei 20 nuotraukų. Norėdami daugiau, užsakykite tikrinimą.');
+                    fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
+                    document.getElementById('fileInput').value = '';
+                    return;
                 }
 
                 if (isValid) {

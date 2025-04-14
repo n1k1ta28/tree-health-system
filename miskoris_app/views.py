@@ -264,11 +264,13 @@ def photos(request, id):
             return redirect('photos', id=forest.id)
 
     photos = forest.images.all()
+    photos_uploaded_by_user = Forest_image.objects.filter(forest=forest, order_id__isnull=True).count()
     analyzed_photos = AnalyzedPhoto.objects.filter(forest=forest)
     return render(request, 'miskoris_app/photos.html', {
         'forest': forest,
         'photos': photos,
-        'analyzed_photos': analyzed_photos
+        'analyzed_photos': analyzed_photos,
+        'photos_uploaded_by_user': photos_uploaded_by_user
     })
 
 @login_required(login_url='login')
@@ -279,6 +281,20 @@ def image_upload(request):
         forest = get_object_or_404(Forest, id=forest_id)
         images = request.FILES.getlist('images')
         allowed_extensions = ('.jpg', '.jpeg', '.png')
+
+        current_unassigned_count = Forest_image.objects.filter(forest=forest, order_id__isnull=True).count()
+
+        max_upload_limit = 20
+
+        if current_unassigned_count >= max_upload_limit:
+            messages.error(request, "Pasiekėte maksimalų 20 nuotraukų limitą. Užsakykite tikrinimą norėdami išanalizuoti mišką.")
+            return redirect('photos', id=forest_id)
+        
+        remaining_slots = max_upload_limit - current_unassigned_count
+
+        if len(images) > remaining_slots:
+            messages.error(request, f"Galite įkelti tik {remaining_slots} daugiau nuotraukų.")
+            return redirect('photos', id=forest_id)
 
         for image in images:
             if not image.name.lower().endswith(allowed_extensions):
