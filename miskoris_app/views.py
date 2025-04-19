@@ -347,7 +347,7 @@ def dry_trees_map(request, id):
     
     dry_tree_locations = []
     for photo in analyzed_photos:
-        if photo.analysis_result:
+        if photo.analysis_result and not photo.fixed:
             match = re.search(r"(\d+)\s+sausų\s+medžių", photo.analysis_result)
             if match:
                 dry_tree_count = int(match.group(1))
@@ -356,9 +356,11 @@ def dry_trees_map(request, id):
                     lon = photo.original_image.longitude
                     if lat and lon:
                         dry_tree_locations.append({
+                            'id': photo.id,
                             'lat': lat,
                             'lng': lon,
                             'count': dry_tree_count
+                           
                         })
     
     context = {
@@ -366,6 +368,24 @@ def dry_trees_map(request, id):
         'dry_tree_locations': json.dumps(dry_tree_locations)
     }
     return render(request, 'miskoris_app/dry_trees_map.html', context)
+
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def mark_tree_fixed(request, id):
+    if request.method == 'POST':
+        try:
+            tree = AnalyzedPhoto.objects.get(id=id)
+            tree.fixed = True
+            tree.save()
+
+            messages.success(request, "Sėkmingai sutvarkyta!")
+            return JsonResponse({'status': 'success'})
+        
+        except AnalyzedPhoto.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Nerastas medis'}, status=404)
+
+    return JsonResponse({'status': 'error', 'message': 'Negalimas iškvietimas'}, status=400)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])

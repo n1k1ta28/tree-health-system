@@ -65,6 +65,7 @@ class AnalyzedPhoto(models.Model):
     image = models.BinaryField()
     analysis_result = models.TextField(blank=True, null=True)
     original_image = models.ForeignKey(Forest_image, on_delete=models.SET_NULL, null=True, blank=True, related_name='analyzed_versions')
+    fixed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Analyzed Image for {self.forest.name}"

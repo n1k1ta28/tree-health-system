@@ -34,5 +34,6 @@ urlpatterns=[
   path('accounts/3rdparty/login/cancelled/', RedirectView.as_view(url='/prisijungimas/')),
   path('accounts/', include('allauth.urls')),
   path('profile/', views.profile, name='profile'),
-  path('forests/<int:id>/dry_trees/', views.dry_trees_map, name='dry_trees_map')
+  path('forests/<int:id>/dry_trees/', views.dry_trees_map, name='dry_trees_map'),
+  path('mark-tree-fixed/<int:id>/', views.mark_tree_fixed, name='mark_tree_fixed')
 ]
