@@ -35,5 +35,6 @@ urlpatterns=[
   path('accounts/', include('allauth.urls')),
   path('profile/', views.profile, name='profile'),
   path('forests/<int:id>/dry_trees/', views.dry_trees_map, name='dry_trees_map'),
-  path('mark-tree-fixed/<int:id>/', views.mark_tree_fixed, name='mark_tree_fixed')
+  path('mark-tree-fixed/<int:id>/', views.mark_tree_fixed, name='mark_tree_fixed'),
+  path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'),
 ]

@@ -4,10 +4,15 @@ from django.core.files.storage import FileSystemStorage
 from django.contrib.auth.forms import UserCreationForm, PasswordChangeForm 
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User, Group
+from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib import messages
 from django.utils import timezone
 from django.utils.safestring import mark_safe
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
+from django.urls import reverse
 import re
 from .forms import CreateUserForm, CustomPasswordChangeForm
 from .decorators import unauthenticated_user
@@ -57,7 +62,6 @@ def about(request):
 @login_required(login_url='login')
 def profile(request):
     user = request.user
-    # Determine the user's role
     if user.is_superuser:
         role = 'administrarotius'
     elif user.groups.exists():
@@ -66,16 +70,15 @@ def profile(request):
         if user.groups.first().name == 'staff':
             role = 'darbuotojas'
     else:
-        role = 'nežinoma'  # Fallback, though unlikely due to registration logic
+        role = 'nežinoma'  # mazai tiketina del registracijos logikos
 
     if request.method == 'POST':
         form = CustomPasswordChangeForm(user, request.POST)
         if form.is_valid():
             user = form.save()
-            update_session_auth_hash(request, user)  # Keep user logged in
+            update_session_auth_hash(request, user)  
             messages.success(request, 'Slaptažodis sėkmingai pakeistas!')
             return redirect('profile')
-        # If form is invalid, errors will be displayed in the template
     else:
         form = CustomPasswordChangeForm(user)
 
@@ -106,19 +109,25 @@ def loginPage(request):
         user = None
 
         try:
-            user_by_email = User.objects.get(email=username_or_email)
-            user = authenticate(request, username=user_by_email.username, password=password)
+            user = User.objects.get(email=username_or_email)
         except User.DoesNotExist:
-            user = authenticate(request, username=username_or_email, password=password)
+            try:
+                user = User.objects.get(username=username_or_email)
+            except User.DoesNotExist:
+                user = None
 
-        if user is not None:
-            login(request, user)
+        if user is None:
+            messages.error(request, 'Neteisingas prisijungimo vardas / el. paštas arba slaptažodis')
+        elif not user.check_password(password):
+            messages.error(request, 'Neteisingas prisijungimo vardas / el. paštas arba slaptažodis')
+        elif not user.is_active:
+            messages.error(request, 'Prašome patvirtinti savo el. paštą')
+        else:
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             if user.is_superuser or user.groups.filter(name='customer').exists():
                 return redirect('forests')
             elif user.groups.filter(name='staff').exists():
                 return redirect('worker_orders')
-        else:
-            messages.info(request, 'Neteisingas prisijungimo vardas / el. paštas arba slaptažodis')
 
     context = {}
     return render(request, "miskoris_app/login.html", context)
@@ -134,18 +143,46 @@ def registerPage(request):
     if request.method == 'POST':
         form = CreateUserForm(request.POST)
         if form.is_valid():
-            user = form.save()
+            user = form.save(commit=False)
+            user.is_active = False  # kol el. pastas nepatvirtintas, naudotojas neaktyvus
+            user.save()
             username = form.cleaned_data.get('username')
 
             group = Group.objects.get(name='customer')
             user.groups.add(group)
 
-            messages.success(request, 'Sėkmingai sukurta paskyra naudotojui: ' + username)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            verification_url = reverse('verify_email', kwargs={'uidb64': uid, 'token': token})
+            full_url = request.build_absolute_uri(verification_url)
 
+            subject = 'Patvirtinkite savo el. paštą'
+            message = f'Norėdami patvirtinti savo el. paštą, spustelėkite šią nuorodą: {full_url}'
+            from_email = 'noreply@miskoris.com'
+            recipient_list = [user.email]
+            send_mail(subject, message, from_email, recipient_list)
+
+            messages.success(request, 'Registracija naudotojui: ' + username + ' sėkminga. Patikrinkite savo el. paštą, kad patvirtintumėte paskyrą.')
             return redirect('login')
 
-    context = {'form':form}
+    context = {'form': form}
     return render(request, "miskoris_app/register.html", context)
+
+def verify_email(request, uidb64, token):
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        messages.success(request, 'Jūsų el. paštas patvirtintas. Dabar galite prisijungti.')
+        return redirect('login')
+    else:
+        messages.error(request, 'Patvirtinimo nuoroda neteisinga arba pasibaigusi.')
+        return redirect('home')
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
