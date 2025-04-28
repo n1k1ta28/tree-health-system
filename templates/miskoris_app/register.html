@@ -8,6 +8,10 @@
     <div class="register-container">
         <h2>Registracija</h2>
 
+        {% for message in messages %}
+            <p id="messages">{{ message }}</p>
+        {% endfor %}
+
         {% if form.errors %}
                 {% for field, errors in form.errors.items %}
                     {% for error in errors %}
