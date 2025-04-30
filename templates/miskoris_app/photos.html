@@ -27,6 +27,7 @@
         <p>{{ message }}</p>
     {% endfor %}
     {% endif %}
+    <div id="uploadError" style="color: red; display: none;"></div>
     <div style="height: 1em;"></div>
 
     <div id="addPhotoUploadForm" class="forest-add-container" style="display: none;">
@@ -155,11 +156,16 @@
                     }
                 }
                 
-                if (fileList.length + existingPhotoCount > 3) {
-                    alert('Galite įkelti ne daugiau nei 20 nuotraukų. Norėdami daugiau, užsakykite tikrinimą.');
+                const errorBox = document.getElementById('uploadError');
+
+                if (fileList.length + existingPhotoCount > 20) {
+                    errorBox.textContent = 'Galite įkelti ne daugiau nei 20 nuotraukų. Norėdami daugiau nuotraukų, užsakykite tikrinimą.';
+                    errorBox.style.display = 'block';
                     fileNameDisplay.textContent = "Pasirinkta: Nėra pasirinktos nuotraukos";
                     document.getElementById('fileInput').value = '';
                     return;
+                } else {
+                    errorBox.style.display = 'none';
                 }
 
                 if (isValid) {
