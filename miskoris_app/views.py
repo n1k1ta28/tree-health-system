@@ -30,7 +30,7 @@ import numpy as np
 from deepforest import main
 import cv2
 from scipy.stats import entropy
-
+import pandas as pd
 # Create your views here.
 
 def calculate_analysis_price(forest_size):
@@ -649,22 +649,61 @@ def worker_completed_orders(request):
     }
     return render(request, "miskoris_app/worker_completed_orders.html", context)
 
+# Initialize DeepForest model
+model = main.deepforest()
+model.use_release()
+
+def is_dry_tree(image, xmin, ymin, xmax, ymax):
+
+    roi = image[ymin:ymax, xmin:xmax]
+    if roi.size == 0:
+        return False
+    
+    roi_hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
+    roi_rgb = roi
+    
+    mean_saturation = np.mean(roi_hsv[:,:,1])
+    mean_value = np.mean(roi_hsv[:,:,2])
+    mean_r = np.mean(roi_rgb[:,:,0])
+    mean_g = np.mean(roi_rgb[:,:,1])
+    mean_b = np.mean(roi_rgb[:,:,2])
+    
+    green_lower = np.array([42, 25, 25])
+    green_upper = np.array([125, 255, 255])
+    green_mask = cv2.inRange(roi_hsv, green_lower, green_upper)
+    total_pixels = roi.shape[0] * roi.shape[1]
+    green_percentage = (np.sum(green_mask > 0) / total_pixels) * 100 if total_pixels > 0 else 0
+    
+    is_not_too_green = mean_g < mean_r or mean_g < mean_b or mean_g < 145
+    is_brownish = mean_r > mean_g and mean_r > mean_b and mean_r > 55
+    is_mixed = (mean_r > mean_g) and (mean_r - mean_g < 50) and (mean_g > 35)
+    is_reasonable_saturation = mean_saturation < 75
+    is_reasonable_brightness = 30 < mean_value < 180
+    is_low_green = green_percentage < 10
+    
+    return (is_not_too_green and (is_brownish or is_mixed) and is_low_green and
+            is_reasonable_saturation and is_reasonable_brightness)
+
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
 def analyze_forest_images(request, id):
     forest = get_object_or_404(Forest, id=id)
-    # Get images that haven't been analyzed yet
     unanalyzed_images = Forest_image.objects.filter(forest=forest, analyzed_versions__isnull=True)
-
+    
     for forest_image in unanalyzed_images:
         try:
+            print(f"Processing image ID {forest_image.id}")
             image_data = forest_image.image
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
             img_resized = img.resize((500, 500), Image.Resampling.LANCZOS)
             image_array = np.array(img_resized)
-
-            # Use the original image without enhancement
+            
+            # Process single orientation (0°)
             predictions = model.predict_image(image=image_array, return_plot=False)
+            if predictions is not None and not predictions.empty:
+                predictions = predictions[predictions["score"] > 0.1]  # Basic score filter
+            
+            print(f"Image ID {forest_image.id}: Detected {len(predictions)} trees")
             
             if predictions is not None and not predictions.empty:
                 dry_tree_count = 0
@@ -674,22 +713,40 @@ def analyze_forest_images(request, id):
                     is_dry = is_dry_tree(image_array, xmin, ymin, xmax, ymax)
                     label = "Sausas medis" if is_dry else "Medis"
                     color = (139, 69, 19) if is_dry else (0, 255, 0)
+                    outer_color = (100, 50, 10) if is_dry else (0, 200, 0)  # Darker for outer line
                     
-                    cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)
+                    # Fancy double-line bounding box
+                    cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)  # Inner thick line
+                    cv2.rectangle(image_array, (xmin-2, ymin-2), (xmax+2, ymax+2), outer_color, 1)  # Outer thin line
+                    
+                    # Semi-transparent label background with smaller font
                     text = f"{label} ({score:.2f})"
-                    cv2.putText(image_array, text, (xmin, ymin - 10),
-                               cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1, cv2.LINE_AA)
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    font_scale = 0.4  # Reduced font size
+                    text_size, _ = cv2.getTextSize(text, font, font_scale, 1)
+                    text_w, text_h = text_size
+                    bg_x, bg_y = xmin, ymin - text_h - 6  # Adjusted for smaller text
+                    bg_x2, bg_y2 = bg_x + text_w + 2, bg_y + text_h + 2  # Tighter background
+                    
+                    # Draw semi-transparent rectangle
+                    overlay = image_array.copy()
+                    cv2.rectangle(overlay, (bg_x, bg_y), (bg_x2, bg_y2), color, -1)
+                    alpha = 0.5  # Transparency
+                    cv2.addWeighted(overlay, alpha, image_array, 1 - alpha, 0, image_array)
+                    
+                    # Draw text
+                    cv2.putText(image_array, text, (bg_x + 1, bg_y + text_h), font,
+                               font_scale, (255, 255, 255), 1, cv2.LINE_AA)
+                    
                     if is_dry:
                         dry_tree_count += 1
-
+                
                 analysis_result = f"Surasta {len(predictions)} medžių, {dry_tree_count} sausų medžių"
             else:
                 analysis_result = "Medžių nerasta"
-
-            # Convert annotated image to bytes
-            _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
             
-            # Save analyzed photo
+            # Save annotated image
+            _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
             analyzed_photo = AnalyzedPhoto(
                 forest=forest,
                 image=buffer.tobytes(),
@@ -697,75 +754,11 @@ def analyze_forest_images(request, id):
                 original_image=forest_image
             )
             analyzed_photo.save()
-
+        
         except Exception as e:
+            print(f"Error processing image ID {forest_image.id}: {str(e)}")
             messages.error(request, f"Nepavyko išanalizuoti nuotraukos ID {forest_image.id}: {str(e)}")
             continue
-
+    
     messages.success(request, "Nuotraukos išanalizuotos sėkmingai!")
     return redirect('photos', id=forest.id)
-
-# Initialize DeepForest model globally
-model = main.deepforest()
-model.use_release()
-
-
-def is_dry_tree(image, xmin, ymin, xmax, ymax):
-    """Check if a tree is dry with balanced green color detection."""
-    # Extract the region of interest (ROI)
-    roi = image[ymin:ymax, xmin:xmax]
-    
-    # Convert to HSV color space
-    roi_hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
-    
-    # Define HSV color ranges for dry trees (brown, yellow, and gray)
-    brown_lower = np.array([0, 10, 20])    # Hue: 0-25 (brown), Sat: 10-150, Val: 20-200
-    brown_upper = np.array([25, 150, 200])
-    yellow_lower = np.array([25, 10, 20])  # Hue: 25-45 (pale yellow/beige), Sat: 10-150, Val: 20-200
-    yellow_upper = np.array([45, 150, 200])
-    gray_lower = np.array([0, 0, 20])      # Hue: 0-360 (gray), Sat: 0-40, Val: 20-200
-    gray_upper = np.array([360, 40, 200])
-    
-    # Define balanced HSV range for healthy green trees
-    green_lower = np.array([42, 25, 25])   # Hue: 42-125 (balanced green range), Sat: 25-255, Val: 25-255
-    green_upper = np.array([125, 255, 255])
-    
-    # Create masks for brown, yellow, gray, and green pixels
-    brown_mask = cv2.inRange(roi_hsv, brown_lower, brown_upper)
-    yellow_mask = cv2.inRange(roi_hsv, yellow_lower, yellow_upper)
-    gray_mask = cv2.inRange(roi_hsv, gray_lower, gray_upper)
-    green_mask = cv2.inRange(roi_hsv, green_lower, green_upper)
-    
-    # Combine brown, yellow, and gray masks to detect dry pixels
-    dry_mask = cv2.bitwise_or(brown_mask, yellow_mask)
-    dry_mask = cv2.bitwise_or(dry_mask, gray_mask)
-    
-    # Calculate percentages of dry and green pixels
-    total_pixels = roi.shape[0] * roi.shape[1]
-    dry_pixel_count = np.sum(dry_mask > 0)
-    green_pixel_count = np.sum(green_mask > 0)
-    
-    dry_percentage = (dry_pixel_count / total_pixels) * 100 if total_pixels > 0 else 0
-    green_percentage = (green_pixel_count / total_pixels) * 100 if total_pixels > 0 else 0
-    
-    # Calculate mean HSV values
-    mean_hue = np.mean(roi_hsv[:, :, 0])
-    mean_saturation = np.mean(roi_hsv[:, :, 1])
-    mean_value = np.mean(roi_hsv[:, :, 2])
-    
-    # Adjusted criteria for classifying a tree as dry:
-    # 1. At least 15% of pixels must be in dry color ranges
-    # 2. Less than 4% of pixels can be green (balanced threshold)
-    # 3. At least 20 dry pixels to avoid noise in small ROIs
-    primary_condition = (dry_percentage > 15) and (green_percentage < 4) and (dry_pixel_count > 20)
-    
-    # Fallback check using mean HSV values
-    fallback_condition = (mean_hue < 45) and (mean_saturation < 100) and (20 < mean_value < 200)
-    
-    # Classify as dry if either the primary or fallback condition is met
-    is_dry = primary_condition or (fallback_condition and green_percentage < 4)
-    
-    # Print debug information to diagnose issues
-    print(f"ROI ({xmin}, {ymin}, {xmax}, {ymax}): Dry %: {dry_percentage:.2f}, Green %: {green_percentage:.2f}, Dry Pixels: {dry_pixel_count}, Mean Hue: {mean_hue:.2f}, Mean Sat: {mean_saturation:.2f}, Is Dry: {is_dry}")
-    
-    return is_dry
