@@ -44,6 +44,14 @@
                 <p>Nėra atliktų analizių.</p>
             {% endif %}
             <p><a href="{% url 'orders' id=forest.id %}" class="btn btn-link">Visi tikrinimai</a></p>
+
+            {% if subscription %}
+                <p>Prenumerata aktyvi iki {{ subscription.paid_until|date:"Y-m-d" }}</p>
+                <a href="{% url 'cancel_subscription' id=forest.id %}" class="btn btn-link">Atšaukti prenumeratą</a>
+            {% else %}
+                <a href="{% url 'subscribe_forest' id=forest.id %}" class="btn btn-link">Užsisakyti prenumeratą</a>
+            {% endif %}
+
         </div>
         <div class="forest-container">
             <h3 class="centered-title">Žemėlapis</h3>
@@ -51,6 +59,7 @@
             <div id="map"></div>
         </div>
     </div>
+
     <script>
         var forestData = JSON.parse('{{ forest_data|escapejs }}');
 

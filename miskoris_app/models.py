@@ -18,6 +18,16 @@ class Forest(models.Model):
     def __str__(self):
         return self.name
 
+class Subscription(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    forest = models.ForeignKey(Forest, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    paid_until = models.DateField()
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Subscription for {self.forest.name} by {self.user.username}"
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('in_progress', 'In Progress'),
@@ -30,6 +40,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     bad_trees_found = models.BooleanField(default=False)
+    is_subscription_order = models.BooleanField(default=False)
 
     def __str__(self):
         return f"Order for {self.forest.name} - {self.get_status_display()}"

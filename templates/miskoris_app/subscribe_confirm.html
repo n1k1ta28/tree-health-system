@@ -1,0 +1,11 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% block sidebar_content %}
+<h2>Patvirtinkite prenumeratą</h2>
+<p>Norite užsisakyti prenumeratą miškui {{ forest.name }}?</p>
+<p>Kaina: {{ price|floatformat:2 }} EUR už 6 mėnesius (su 15% nuolaida)</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary">Patvirtinti</button>
+    <a href="{% url 'forest' id=forest.id %}" class="btn btn-secondary">Atšaukti</a>
+</form>
+{% endblock %}

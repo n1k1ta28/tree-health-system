@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    'miskoris_app'
+    'miskoris_app',
 ]
 
 MIDDLEWARE = [
