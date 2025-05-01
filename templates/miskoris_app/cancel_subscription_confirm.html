@@ -1,0 +1,10 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% block sidebar_content %}
+<h2>Atšaukti prenumeratą</h2>
+<p>Ar tikrai norite atšaukti prenumeratą miškui {{ forest.name }}?</p>
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-secondary">Taip, atšaukti</button>
+    <a href="{% url 'forest' id=forest.id %}" class="btn btn-secondary">Ne</a>
+</form>
+{% endblock %}

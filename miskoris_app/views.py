@@ -17,9 +17,11 @@ import re
 from .forms import CreateUserForm, CustomPasswordChangeForm
 from .decorators import unauthenticated_user
 from .decorators import allowed_users
-from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto
+from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto, Subscription
 
 import json
+
+from dateutil.relativedelta import relativedelta
 
 import base64
 import io
@@ -30,6 +32,18 @@ import cv2
 from scipy.stats import entropy
 
 # Create your views here.
+
+def calculate_analysis_price(forest_size):
+    if forest_size <= 20:
+        return 70
+    elif forest_size <= 40:
+        return 90
+    elif forest_size <= 80:
+        return 120
+    elif forest_size <= 150:
+        return 170
+    else:
+        return 230
 
 def home(request):
   return render(request, "miskoris_app/home.html")
@@ -237,6 +251,8 @@ def forests(request):
 def forest(request, id):
     forest = get_object_or_404(Forest, id=id)
 
+    subscription = Subscription.objects.filter(user=request.user, forest=forest, is_active=True).first()
+
     latest_completed_order = (
         forest.orders.filter(status="completed", completed_at__isnull=False)
         .order_by("-completed_at")
@@ -273,8 +289,44 @@ def forest(request, id):
         "forest_data": mark_safe(forest_data),
         "latest_completed_date": latest_completed_date,
         "has_dry_trees": has_dry_trees,
+        "subscription": subscription,
     }
     return render(request, "miskoris_app/forest.html", context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def subscribe_forest(request, id):
+    forest = get_object_or_404(Forest, id=id, user=request.user)
+    if request.method == 'POST':
+        price = calculate_analysis_price(forest.area) * 6 * 0.85  # 15% discount for 6 months
+        start_date = timezone.now().date()
+        paid_until = start_date + relativedelta(months=6)
+        Subscription.objects.create(
+            user=request.user,
+            forest=forest,
+            start_date=start_date,
+            paid_until=paid_until,
+            is_active=True
+        )
+        messages.success(request, "Sėkmingai užsisakėte prenumeratą!")
+        return redirect('forest', id=forest.id)
+    else:
+        price = calculate_analysis_price(forest.area) * 6 * 0.85
+        context = {'forest': forest, 'price': price}
+        return render(request, 'miskoris_app/subscribe_confirm.html', context)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def cancel_subscription(request, id):
+    forest = get_object_or_404(Forest, id=id, user=request.user)
+    subscription = get_object_or_404(Subscription, user=request.user, forest=forest, is_active=True)
+    if request.method == 'POST':
+        subscription.is_active = False
+        subscription.save()
+        messages.success(request, "Prenumerata atšaukta.")
+        return redirect('forest', id=forest.id)
+    else:
+        return render(request, 'miskoris_app/cancel_subscription_confirm.html', {'forest': forest})
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
