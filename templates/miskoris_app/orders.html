@@ -86,48 +86,114 @@
         <p>Ar tikrai norite užsakyti tikrinimą?</p>
         <p class="price-info"><strong>Kaina:</strong> skaičiuojama...</p>
         <div class="button-group">
-        <button onclick="submitOrder()" class="btn">Taip</button>
-        <button onclick="cancelOrder()" class="btn btn-secondary">Ne</button>
+        
+        <button onclick="submitOrder()" id="taipButton" class="btn">Taip</button>
+        <button onclick="cancelOrder()" class="btn btn-secondary" style="margin-left: auto";>Ne</button>
         </div>
+        <div id="paypal-button-container" style="margin-top: 10px;"></div>
     </div>
 
     <script>
+        
         function confirmOrder() {
 
             const forestSize = parseFloat(document.getElementById('orderButton').dataset.forestSize);
-            let  calculatedPrice  = 70;
-            if (forestSize > 20 )
+            let calculatedPrice = 70;
+            if (forestSize <= 20 )
+            {
+                calculatedPrice = 70;
+            }
+            else if (forestSize <= 40)
             {
                 calculatedPrice = 90;
             }
-            else if (forestSize >= 40)
+            else if (forestSize <= 80)
             {
                 calculatedPrice = 120;
             }
-            else if (forestSize >= 80)
+            else if (forestSize <= 150)
             {
                 calculatedPrice = 170;
             }
-            else if (forestSize >= 150)
-            {
+            else{
                 calculatedPrice = 230;
             }
-
             document.querySelector('#confirmationDialog .price-info').innerText = `Kaina: €${calculatedPrice.toFixed(2)}`;
-
             document.getElementById('overlay').style.display = 'block';
             document.getElementById('confirmationDialog').style.display = 'block';
-            
         }
-    
         function submitOrder() {
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('orderForm').submit();
+            const calculatedPrice = parseFloat(document.querySelector('#confirmationDialog .price-info').innerText.replace('Kaina: €', ''));
+
+            document.getElementById('taipButton').style.display = 'none';
+            renderPayPalButton(calculatedPrice);
         }
+
+        function renderPayPalButton(calculatedPrice) {
+            // Check if PayPal buttons are already rendered
+            if (!window.paypalRendered) {
+                paypal.Buttons({
+                    createOrder: function(data, actions) {
+                        return actions.order.create({
+                            purchase_units: [{
+                                amount: {
+                                    value: calculatedPrice.toFixed(2)
+                                }
+                            }]
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        return actions.order.capture().then(function(details) {
+                            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+                            fetch("{% url 'store_payment' %}", {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRFToken': csrfToken,
+                                },
+                                body: JSON.stringify({
+                                    transaction_id: details.id,
+                                    payer_email: details.payer.email_address,
+                                    amount: details.purchase_units[0].amount.value,
+                                    currency: details.purchase_units[0].amount.currency_code,
+                                    forest_id: "{{ forest.id }}",
+                                    payment_type: "order"
+                                })
+                            }).then(response => {
+                                if (response.ok) {
+                                    // Redirect to order creation (or submit form)
+                                    document.getElementById('orderForm').submit();
+                                } else {
+                                    alert("Nepavyko išsaugoti mokėjimo informacijos.");
+                                }
+                            });
+                        });                                  
+                    },
+                    onCancel: function(data) {
+                        alert('Mokėjimas buvo atšauktas.');
+                    },
+                    onError: function(err) {
+                        if (err && err.message && err.message.includes("popup close")) {
+                            alert('Mokėjimas buvo atšauktas.');
+                        } else {
+                            alert('Įvyko klaida: ' + err);
+                        }
+                    }
+                }).render('#paypal-button-container');
+                window.paypalRendered = true;
+            }
+        }
+
     
         function cancelOrder() {
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('confirmationDialog').style.display = 'none';
+
+            document.getElementById('paypal-button-container').innerHTML = '';
+            document.getElementById('taipButton').style.display = 'inline-block';
+            window.paypalRendered = false;
         }
+        
     </script>
 {% endblock %}

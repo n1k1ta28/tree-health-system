@@ -80,3 +80,16 @@ class AnalyzedPhoto(models.Model):
 
     def __str__(self):
         return f"Analyzed Image for {self.forest.name}"
+    
+class Payment(models.Model):
+    transaction_id = models.CharField(max_length=100, unique=True)
+    payer_email = models.EmailField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10)
+    forest = models.ForeignKey(Forest, on_delete=models.CASCADE, related_name='payments')
+    order = models.OneToOneField(Order, on_delete=models.SET_NULL, null=True, blank=True, related_name='payment')
+    subscription = models.OneToOneField(Subscription, on_delete=models.SET_NULL, null=True, blank=True, related_name='payment')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.transaction_id} - {self.amount} {self.currency}"

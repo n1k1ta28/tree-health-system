@@ -17,7 +17,7 @@ import re
 from .forms import CreateUserForm, CustomPasswordChangeForm
 from .decorators import unauthenticated_user
 from .decorators import allowed_users
-from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto, Subscription
+from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto, Subscription,Payment
 
 import json
 
@@ -297,17 +297,34 @@ def forest(request, id):
 @allowed_users(allowed_roles=['admin', 'customer'])
 def subscribe_forest(request, id):
     forest = get_object_or_404(Forest, id=id, user=request.user)
-    if request.method == 'POST':
+    if request.method == 'POST' and request.POST.get('payment_confirmed') == 'true':
+        payment_data = request.session.pop('pending_payment', None)
+        if not payment_data:
+            messages.error(request, "Prenumerata neapmokėta.")
+            return redirect('subscribe_forest', id=forest.id)
+       
         price = calculate_analysis_price(forest.area) * 6 * 0.85  # 15% discount for 6 months
+        if float(payment_data['amount']) != round(price, 2):
+            messages.error(request, "Neteisinga mokėjimo suma.")
+            return redirect('subscribe_forest', id=forest.id)
         start_date = timezone.now().date()
         paid_until = start_date + relativedelta(months=6)
-        Subscription.objects.create(
+        subscription = Subscription.objects.create(
             user=request.user,
             forest=forest,
             start_date=start_date,
             paid_until=paid_until,
             is_active=True
         )
+        Payment.objects.create(
+            transaction_id=payment_data['transaction_id'],
+            payer_email=payment_data['payer_email'],
+            amount=payment_data['amount'],
+            currency=payment_data['currency'],
+            forest=forest,
+            subscription=subscription
+        )
+
         messages.success(request, "Sėkmingai užsisakėte prenumeratą!")
         return redirect('forest', id=forest.id)
     else:
@@ -533,10 +550,42 @@ def orders(request, id):
             status='in_progress'
         )
 
+        # Link payment from session if it exists
+        payment_data = request.session.pop('pending_payment', None)
+        if payment_data and payment_data.get('payment_type') == 'order':
+            try:
+                Payment.objects.create(
+                    transaction_id=payment_data['transaction_id'],
+                    payer_email=payment_data['payer_email'],
+                    amount=payment_data['amount'],
+                    currency=payment_data['currency'],
+                    forest=forest,
+                    order=order
+                )
+            except Exception as e:
+                messages.warning(request, "Mokėjimo informacijos išsaugoti nepavyko.")
+
         messages.success(request, "Tikrinimas užsakytas!")
         return redirect('orders', id=forest.id)
 
     return render(request, 'miskoris_app/orders.html', {'forest': forest, 'orders': orders})
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def store_payment(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        request.session['pending_payment'] = {
+            'transaction_id': data['transaction_id'],
+            'payer_email': data['payer_email'],
+            'amount': data['amount'],
+            'currency': data['currency'],
+            'forest_id': data['forest_id'],
+            'payment_type': data.get('payment_type'),
+            'subscription_id': data.get('subscription_id'),
+        }
+        return JsonResponse({'status': 'ok'})
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
@@ -762,3 +811,4 @@ def analyze_forest_images(request, id):
     
     messages.success(request, "Nuotraukos išanalizuotos sėkmingai!")
     return redirect('photos', id=forest.id)
+

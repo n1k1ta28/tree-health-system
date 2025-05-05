@@ -39,4 +39,5 @@ urlpatterns=[
   path('forests/<int:id>/dry_trees/', views.dry_trees_map, name='dry_trees_map'),
   path('mark-tree-fixed/<int:id>/', views.mark_tree_fixed, name='mark_tree_fixed'),
   path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'),
+   path('store_payment/', views.store_payment, name='store_payment'),
 ]
