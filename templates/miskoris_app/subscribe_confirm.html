@@ -1,18 +1,19 @@
 {% extends 'miskoris_app/sidebar.html' %}
 {% block sidebar_content %}
-<h2>Patvirtinkite prenumeratą</h2>
-<p>Norite užsisakyti prenumeratą miškui {{ forest.name }}?</p>
-<p>Kaina: {{ price|floatformat:2 }} EUR už 6 mėnesius (su 15% nuolaida)</p>
+<div style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+    <h2>Patvirtinkite prenumeratą</h2>
+    <p>Norite užsisakyti prenumeratą miškui {{ forest.name }}?</p>
+    <p>Kaina: {{ price|floatformat:2 }} EUR už 6 mėnesius (su 15% nuolaida)</p>
 
-<form id="subscriptionForm" method="post">
-    {% csrf_token %}
-    <input type="hidden" name="payment_confirmed" value="true">
-</form>
+    <form id="subscriptionForm" method="post">
+        {% csrf_token %}
+        <input type="hidden" name="payment_confirmed" value="true">
+    </form>
 
-<div id="paypal-button-container" style="margin-top: 20px;"></div>
+    <div id="paypal-button-container" style="margin: 20px 0;"></div>
 
-<a href="{% url 'forest' id=forest.id %}" class="btn btn-secondary" style="margin-top: 20px;">Atšaukti</a>
-
+    <a href="{% url 'forest' id=forest.id %}" class="btn btn-secondary">Atšaukti</a>
+</div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const subscriptionPrice  = parseFloat("{{ price|floatformat:2}}");

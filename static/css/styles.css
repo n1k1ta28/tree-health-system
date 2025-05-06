@@ -676,6 +676,10 @@ a.document-link svg {
     color: #333;
 }
 
+.about-container p {
+    font-size: 25px;
+}
+
 .left-column p {
     font-size: 1.2em;
 }
