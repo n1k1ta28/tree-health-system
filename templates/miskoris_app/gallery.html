@@ -1,40 +1,90 @@
 {% extends 'miskoris_app/sidebar.html' %}
 {% load custom_filters %}
-{% block title %}Miškas - {{ forest.name }} {% endblock %}
+{% block title %}Galerija{% endblock %}
 
 {% block sidebar_content %}
     <h1>Galerija</h1>
     <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
-    {% for forest, images in forests_images.items %}
+    <form method="post" action="{% url 'analyze_all_forests' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-clear">
+            <i class="fas fa-cogs"></i> Analizuoti visus miškus
+        </button>
+    </form>
+    {% for data in forests_data %}
     <div class="forest-gallery">
-        <h2><a href="{% url 'photos' id=forest.id %}" class="forest-item"> Miškas {{ forest.name }}</a></h2>
-
+        <h2><a href="{% url 'photos' id=data.forest.id %}" class="forest-item"> Miškas {{ data.forest.name }}</a></h2>
         <div class="forest_images">
-            {% for image in images %}
+            {% for image in data.images %}
                 <div class="forest_image">
-                    <img src="data:image/jpeg;base64,{{ image.image|base64encode }}" alt="Image of {{ forest.name }}"onclick="openModal(this)">
+                    <img src="data:image/jpeg;base64,{{ image.image|base64encode }}" alt="Image of {{ data.forest.name }}" onclick="openModal(this)">
                 </div>
             {% endfor %}
         </div>
+        <div class="analyzed-photos-section">
+            <h3>Analizuotos nuotraukos</h3>
+            <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+            {% if data.analyzed_photos %}
+            <ul style="list-style-type: none;" class="analyzed_images">
+                {% for analyzed_photo in data.analyzed_photos %}
+                <li>
+                    <div class="analyzed_image">
+                        <img src="data:image/jpeg;base64,{{ analyzed_photo.image|base64encode }}" 
+                             alt="Analyzed image for {{ data.forest.name }}" 
+                             width="200px" 
+                             onclick="openModal(this)">
+                        {% if analyzed_photo.analysis_result %}
+                        <p class="analysis-result">Analizės rezultatas: {{ analyzed_photo.analysis_result }}</p>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p>Nėra analizuotų nuotraukų.</p>
+            {% endif %}
+        </div>
     </div>
-{% endfor %}
+    {% endfor %}
 
-<div id="imageModal" class="modal">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <img class="modal-content" id="modalImage">
-</div>
+    <div id="imageModal" class="modal">
+        <span class="close" onclick="closeModal()">×</span>
+        <img class="modal-content" id="modalImage">
+        <button class="prev" onclick="prevImage()">❮</button>
+        <button class="next" onclick="nextImage()">❯</button>
+    </div>
 
-<script>
-    //View photo
-    function openModal(imgElement) {
-        document.getElementById("modalImage").src = imgElement.src;
-        document.getElementById("imageModal").style.display = "block";
-    }
+    <script>
+        let images = [];
+        let currentIndex = 0;
 
-    function closeModal() {
-        document.getElementById("imageModal").style.display = "none";
-    }
-</script>
+        function openModal(imgElement) {
+            images = Array.from(document.querySelectorAll(".forest_image img, .analyzed_image img")).map(img => img.src);
+            currentIndex = images.indexOf(imgElement.src);
+            document.getElementById("modalImage").src = imgElement.src;
+            document.getElementById("imageModal").style.display = "flex";
+        }
+
+        function closeModal() {
+            document.getElementById("imageModal").style.display = "none";
+        }
+
+        function nextImage() {
+            if (currentIndex < images.length - 1) {
+                currentIndex++;
+            } else {
+                currentIndex = 0;
+            }
+            document.getElementById("modalImage").src = images[currentIndex];
+        }
+
+        function prevImage() {
+            if (currentIndex > 0) {
+                currentIndex--;
+            } else {
+                currentIndex = images.length - 1;
+            }
+            document.getElementById("modalImage").src = images[currentIndex];
+        }
+    </script>
 {% endblock %}
-
-

@@ -10,7 +10,7 @@ body {
 }
 .background{
     position: relative; 
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -270,7 +270,7 @@ footer {
 
 /* Unchanged registration-background-container */
 .registration-background-container {
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -835,35 +835,8 @@ input[type="checkbox"]:checked::before {
 .analyzed_images {
     display: flex;
     flex-wrap: wrap;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    width: 100%;
 }
 
 .analyzed_images li {
     margin: 10px;
-}
-
-.analyzed_image {
-    width: 200px;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s ease-in-out;
-    padding-bottom: 10px; /* Adds space below the image for the text */
-}
-
-.analyzed_image img {
-    width: 100%;
-    height: 200px; /* Fixes the image height */
-    object-fit: cover;
-    border-radius: 8px;
-}
-
-.analysis-result {
-    font-size: 12px;
-    margin-top: 5px;
-    word-wrap: break-word;
-    text-align: center;
-    padding: 0 5px; /* Optional: adds horizontal padding to the text */
 }

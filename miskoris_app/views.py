@@ -518,15 +518,16 @@ def mapPage(request):
 @allowed_users(allowed_roles=['admin', 'customer'])
 def forests_gallery(request):
     user = request.user
-
     forests = Forest.objects.filter(user=user)
-
-    forests_images = {}
-    for forest in forests:
-        images = Forest_image.objects.filter(forest=forest)
-        forests_images[forest] = images
-
-    return render(request, 'miskoris_app/gallery.html', {'forests_images': forests_images})
+    forests_data = [
+        {
+            'forest': forest,
+            'images': Forest_image.objects.filter(forest=forest),
+            'analyzed_photos': AnalyzedPhoto.objects.filter(forest=forest)
+        }
+        for forest in forests
+    ]
+    return render(request, 'miskoris_app/gallery.html', {'forests_data': forests_data})
 
 
 @login_required(login_url='login')
@@ -733,12 +734,8 @@ def is_dry_tree(image, xmin, ymin, xmax, ymax):
     return (is_not_too_green and (is_brownish or is_mixed) and is_low_green and
             is_reasonable_saturation and is_reasonable_brightness)
 
-@login_required(login_url='login')
-@allowed_users(allowed_roles=['admin', 'customer'])
-def analyze_forest_images(request, id):
-    forest = get_object_or_404(Forest, id=id)
+def analyze_single_forest(forest):
     unanalyzed_images = Forest_image.objects.filter(forest=forest, analyzed_versions__isnull=True)
-    
     for forest_image in unanalyzed_images:
         try:
             print(f"Processing image ID {forest_image.id}")
@@ -746,14 +743,10 @@ def analyze_forest_images(request, id):
             img = Image.open(io.BytesIO(image_data)).convert("RGB")
             img_resized = img.resize((500, 500), Image.Resampling.LANCZOS)
             image_array = np.array(img_resized)
-            
-            # Process single orientation (0°)
             predictions = model.predict_image(image=image_array, return_plot=False)
             if predictions is not None and not predictions.empty:
-                predictions = predictions[predictions["score"] > 0.1]  # Basic score filter
-            
+                predictions = predictions[predictions["score"] > 0.1]
             print(f"Image ID {forest_image.id}: Detected {len(predictions)} trees")
-            
             if predictions is not None and not predictions.empty:
                 dry_tree_count = 0
                 for _, row in predictions.iterrows():
@@ -762,39 +755,27 @@ def analyze_forest_images(request, id):
                     is_dry = is_dry_tree(image_array, xmin, ymin, xmax, ymax)
                     label = "Sausas medis" if is_dry else "Medis"
                     color = (139, 69, 19) if is_dry else (0, 255, 0)
-                    outer_color = (100, 50, 10) if is_dry else (0, 200, 0)  # Darker for outer line
-                    
-                    # Fancy double-line bounding box
-                    cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)  # Inner thick line
-                    cv2.rectangle(image_array, (xmin-2, ymin-2), (xmax+2, ymax+2), outer_color, 1)  # Outer thin line
-                    
-                    # Semi-transparent label background with smaller font
+                    outer_color = (100, 50, 10) if is_dry else (0, 200, 0)
+                    cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)
+                    cv2.rectangle(image_array, (xmin-2, ymin-2), (xmax+2, ymax+2), outer_color, 1)
                     text = f"{label} ({score:.2f})"
                     font = cv2.FONT_HERSHEY_SIMPLEX
-                    font_scale = 0.4  # Reduced font size
+                    font_scale = 0.4
                     text_size, _ = cv2.getTextSize(text, font, font_scale, 1)
                     text_w, text_h = text_size
-                    bg_x, bg_y = xmin, ymin - text_h - 6  # Adjusted for smaller text
-                    bg_x2, bg_y2 = bg_x + text_w + 2, bg_y + text_h + 2  # Tighter background
-                    
-                    # Draw semi-transparent rectangle
+                    bg_x, bg_y = xmin, ymin - text_h - 6
+                    bg_x2, bg_y2 = bg_x + text_w + 2, bg_y + text_h + 2
                     overlay = image_array.copy()
                     cv2.rectangle(overlay, (bg_x, bg_y), (bg_x2, bg_y2), color, -1)
-                    alpha = 0.5  # Transparency
+                    alpha = 0.5
                     cv2.addWeighted(overlay, alpha, image_array, 1 - alpha, 0, image_array)
-                    
-                    # Draw text
                     cv2.putText(image_array, text, (bg_x + 1, bg_y + text_h), font,
                                font_scale, (255, 255, 255), 1, cv2.LINE_AA)
-                    
                     if is_dry:
                         dry_tree_count += 1
-                
                 analysis_result = f"Surasta {len(predictions)} medžių, {dry_tree_count} sausų medžių"
             else:
                 analysis_result = "Medžių nerasta"
-            
-            # Save annotated image
             _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
             analyzed_photo = AnalyzedPhoto(
                 forest=forest,
@@ -803,12 +784,23 @@ def analyze_forest_images(request, id):
                 original_image=forest_image
             )
             analyzed_photo.save()
-        
         except Exception as e:
             print(f"Error processing image ID {forest_image.id}: {str(e)}")
-            messages.error(request, f"Nepavyko išanalizuoti nuotraukos ID {forest_image.id}: {str(e)}")
-            continue
-    
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def analyze_forest_images(request, id):
+    forest = get_object_or_404(Forest, id=id)
+    analyze_single_forest(forest)
     messages.success(request, "Nuotraukos išanalizuotos sėkmingai!")
     return redirect('photos', id=forest.id)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def analyze_all_forests(request):
+    forests = Forest.objects.filter(user=request.user)
+    for forest in forests:
+        analyze_single_forest(forest)
+    messages.success(request, "Visų miškų nuotraukos išanalizuotos sėkmingai!")
+    return redirect('forests_gallery')
 

@@ -10,7 +10,7 @@ body {
 }
 .background{
     position: relative; 
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -270,7 +270,7 @@ footer {
 
 /* Unchanged registration-background-container */
 .registration-background-container {
-    background-image: url("../images/forest.jpg");
+    background-image: url("../images/forest.4ca3be36edbd.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;

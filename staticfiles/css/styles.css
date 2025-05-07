@@ -676,6 +676,14 @@ a.document-link svg {
     color: #333;
 }
 
+.about-container p {
+    font-size: 25px;
+}
+
+.left-column p {
+    font-size: 1.2em;
+}
+
 .pricing-columns {
     display: flex;
     justify-content: space-between;
@@ -822,4 +830,40 @@ input[type="checkbox"]:checked::before {
 .google-logo {
     width: 20px;
     margin-right: 10px;
+}
+
+.analyzed_images {
+    display: flex;
+    flex-wrap: wrap;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    width: 100%;
+}
+
+.analyzed_images li {
+    margin: 10px;
+}
+
+.analyzed_image {
+    width: 200px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+    padding-bottom: 10px; /* Adds space below the image for the text */
+}
+
+.analyzed_image img {
+    width: 100%;
+    height: 200px; /* Fixes the image height */
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.analysis-result {
+    font-size: 12px;
+    margin-top: 5px;
+    word-wrap: break-word;
+    text-align: center;
+    padding: 0 5px; /* Optional: adds horizontal padding to the text */
 }
