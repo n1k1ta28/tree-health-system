@@ -595,8 +595,10 @@ def order(request, forest_id, order_id):
     forest = get_object_or_404(Forest, id=forest_id)
     
     images = Forest_image.objects.filter(order=order)
+    analyzed_photos = AnalyzedPhoto.objects.filter(original_image__in=images)
+    
+    return render(request, 'miskoris_app/order.html', {'order': order, 'forest': forest, 'images': images, 'analyzed_photos': analyzed_photos})
 
-    return render(request, 'miskoris_app/order.html', {'order': order, 'forest': forest, 'images': images})
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
@@ -656,7 +658,7 @@ def serve_document(request, document_id):
 @allowed_users(allowed_roles=['admin', 'staff'])
 def worker_orders(request):
     #worker = request.user
-    ongoing_orders = Order.objects.filter(status='in_progress') #worke=worker
+    ongoing_orders = Order.objects.filter(status='in_progress') #worker=worker
 
     if request.method == 'POST' and request.FILES.getlist('images'):
         order_id = request.POST.get('order_id')
@@ -670,16 +672,28 @@ def worker_orders(request):
                 messages.error(request, f"Netinkamas failas: {image.name}. Leidžiami tik JPEG ir PNG!")
                 return redirect('worker_orders')
 
-            # Save the image linked to the order and forest
             image_data = image.read()
             forest_image = Forest_image(forest=forest, order=order, image=image_data)
             forest_image.save()
 
-        # Update order status to completed
         order.status = 'completed'
         order.completed_at = timezone.now()
         order.bad_trees_found = False  # Default; update this logic if needed
         order.save()
+
+        if order.forest.user.email:
+            subject = 'Užsakymas užbaigtas'
+            message = (
+                f'Jūsų užsakymas miškui {order.forest.name} buvo užbaigtas. '
+                f'Galite peržiūrėti rezultatus čia: '
+                f'{request.build_absolute_uri(reverse("order", args=[order.forest.id, order.id]))}'
+            )
+            from_email = 'noreply@miskorius.com'
+            recipient_list = [order.forest.user.email]
+            try:
+                send_mail(subject, message, from_email, recipient_list, fail_silently=True)
+            except Exception as e:
+                print(f"Failed to send email: {e}")
 
         messages.success(request, "Nuotraukos sėkmingai įkeltos ir užsakymas užbaigtas!")
         return redirect('worker_orders')
@@ -734,9 +748,8 @@ def is_dry_tree(image, xmin, ymin, xmax, ymax):
     return (is_not_too_green and (is_brownish or is_mixed) and is_low_green and
             is_reasonable_saturation and is_reasonable_brightness)
 
-def analyze_single_forest(forest):
-    unanalyzed_images = Forest_image.objects.filter(forest=forest, analyzed_versions__isnull=True)
-    for forest_image in unanalyzed_images:
+def analyze_images(images):
+    for forest_image in images:
         try:
             print(f"Processing image ID {forest_image.id}")
             image_data = forest_image.image
@@ -778,7 +791,7 @@ def analyze_single_forest(forest):
                 analysis_result = "Medžių nerasta"
             _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
             analyzed_photo = AnalyzedPhoto(
-                forest=forest,
+                forest=forest_image.forest,
                 image=buffer.tobytes(),
                 analysis_result=analysis_result,
                 original_image=forest_image
@@ -786,6 +799,10 @@ def analyze_single_forest(forest):
             analyzed_photo.save()
         except Exception as e:
             print(f"Error processing image ID {forest_image.id}: {str(e)}")
+
+def analyze_single_forest(forest):
+    unanalyzed_images = Forest_image.objects.filter(forest=forest, analyzed_versions__isnull=True) 
+    analyze_images(unanalyzed_images)
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
@@ -797,10 +814,19 @@ def analyze_forest_images(request, id):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
+def analyze_order_images(request, forest_id, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    forest = get_object_or_404(Forest, id=forest_id)
+    images = Forest_image.objects.filter(order=order, analyzed_versions__isnull=True) 
+    analyze_images(images)
+    messages.success(request, "Užsakymo nuotraukos išanalizuotos sėkmingai!")
+    return redirect('order', forest_id=forest_id, order_id=order_id)
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
 def analyze_all_forests(request):
     forests = Forest.objects.filter(user=request.user)
     for forest in forests:
         analyze_single_forest(forest)
     messages.success(request, "Visų miškų nuotraukos išanalizuotos sėkmingai!")
     return redirect('forests_gallery')
-

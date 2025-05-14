@@ -41,4 +41,5 @@ urlpatterns=[
   path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'),
   path('store_payment/', views.store_payment, name='store_payment'),
   path('analizuoti_visus_miskus/', views.analyze_all_forests, name='analyze_all_forests'),
+  path('miskai/<int:forest_id>/tikrinimas/<int:order_id>/analizuoti/', views.analyze_order_images, name='analyze_order_images'),
 ]

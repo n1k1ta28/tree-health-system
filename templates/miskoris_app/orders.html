@@ -25,7 +25,6 @@
                     <th>Statusas</th>
                     <th>Sukūrimo data</th>
                     <th>Patikros data</th>
-                    <th>Rasta pažeistų medžių</th>
                 </tr>
             </thead>
             <tbody>
@@ -52,21 +51,10 @@
                             -
                         {% endif %}
                     </td>
-                    <td>
-                        {% if order.bad_trees_found %}
-                            Yra
-                        {% elif order.status == 'in_progress' %}
-                            -
-                        {% elif order.bad_trees_found is False %}
-                            Nėra
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6">Nėra užsakytų tikrinimų.</td>
+                    <td colspan="5">Nėra užsakytų tikrinimų.</td>
                 </tr>
                 {% endfor %}
             </tbody>
