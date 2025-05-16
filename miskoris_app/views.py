@@ -13,6 +13,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.urls import reverse
+from django.views.decorators.http import require_POST
 import re
 from .forms import CreateUserForm, CustomPasswordChangeForm
 from .decorators import unauthenticated_user
@@ -806,6 +807,7 @@ def analyze_single_forest(forest):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
+@require_POST
 def analyze_forest_images(request, id):
     forest = get_object_or_404(Forest, id=id)
     analyze_single_forest(forest)
@@ -814,6 +816,7 @@ def analyze_forest_images(request, id):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
+@require_POST
 def analyze_order_images(request, forest_id, order_id):
     order = get_object_or_404(Order, id=order_id)
     forest = get_object_or_404(Forest, id=forest_id)
@@ -824,6 +827,7 @@ def analyze_order_images(request, forest_id, order_id):
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin', 'customer'])
+@require_POST
 def analyze_all_forests(request):
     forests = Forest.objects.filter(user=request.user)
     for forest in forests:
