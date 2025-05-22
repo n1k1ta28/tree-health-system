@@ -93,3 +93,12 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"{self.transaction_id} - {self.amount} {self.currency}"
+    
+class ForestNote(models.Model):
+    forest = models.ForeignKey(Forest, on_delete=models.CASCADE, related_name='notes')
+    note = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Note for {self.forest.name} - {self.created_at}"

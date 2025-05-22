@@ -1,0 +1,38 @@
+{% extends 'miskoris_app/sidebar.html' %}
+{% block title %}Užrašai - {{ forest.name }} {% endblock %}
+
+{% block sidebar_content %}
+    <h1>Užrašai <span class="thin-vertical-line"></span> Miškas {{ forest.name }}</h1>
+    <hr style="border: 1px solid rgb(192, 192, 192); margin: 20px 0;">
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="notes-list">
+        {% for note in notes %}
+            <div class="note-item">
+                <p>{{ note.note }}</p>
+                <small>Pridėta: {{ note.created_at|date:"Y-m-d H:i" }}</small>
+                <form method="post" style="display:inline;">
+                    {% csrf_token %}
+                    <input type="hidden" name="note_id" value="{{ note.id }}">
+                    <button type="submit" name="delete_note" class="btn btn-danger btn-sm">Ištrinti</button>
+                </form>
+            </div>
+        {% empty %}
+            <p>Nėra užrašų.</p>
+        {% endfor %}
+    </div>
+
+    <h3>Pridėti naują užrašą</h3>
+    <form method="post">
+        {% csrf_token %}
+        <textarea name="note" rows="4" cols="50" required></textarea><br>
+        <button type="submit" name="add_note" class="btn btn-primary">Pridėti</button>
+    </form>
+{% endblock %}

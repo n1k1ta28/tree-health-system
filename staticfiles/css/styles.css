@@ -96,6 +96,9 @@ footer {
     color: white; /* Text color for contrast */
     font-size: 20px;
 }
+.text-container h1{
+    font-size: 50px;
+}
 
 /* Main container to align sidebar and content horizontally */
 .main-container {
@@ -280,6 +283,22 @@ footer {
     align-items: center;
     margin: 0;
     padding: 20px;
+    position: relative; 
+}
+.registration-background-container::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+.registration-background-container > * {
+    position: relative;
+    z-index: 2;
 }
 
 #errors {
@@ -699,7 +718,6 @@ a.document-link svg {
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
     width: 25%;
     text-align: center;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
     overflow: hidden;
 }
 
@@ -866,4 +884,12 @@ input[type="checkbox"]:checked::before {
     word-wrap: break-word;
     text-align: center;
     padding: 0 5px; /* Optional: adds horizontal padding to the text */
+}
+
+.note-item {
+    border: 1px solid #ccc;
+    padding: 15px;        
+    margin-bottom: 15px;  
+    border-radius: 5px;  
+    background-color: #f9f9f9;   
 }
