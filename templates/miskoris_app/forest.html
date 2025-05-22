@@ -27,6 +27,7 @@
             <p><strong>Platuma:</strong> {{ forest.latitude }}</p>
             <p><strong>Ilguma:</strong> {{ forest.longitude }}</p>
             <p><a href="{% url 'documents' id=forest.id %}" class="btn btn-link">Dokumentai</a></p>
+            <p><a href="{% url 'forest_notes' id=forest.id %}" class="btn btn-link">Užrašai</a></p>
         </div>
         <div class="forest-container">
             <h3 class="centered-title">Miškas</h3>

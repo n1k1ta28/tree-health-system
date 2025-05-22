@@ -18,6 +18,7 @@ urlpatterns=[
   path('miskai/<int:id>/', views.forest, name='forest'),
   path('miskai/<int:id>/prenumeruoti/', views.subscribe_forest, name='subscribe_forest'),
   path('miskai/<int:id>/atsaukti_prenumerata/', views.cancel_subscription, name='cancel_subscription'),
+  path('miskai/<int:id>/uzrasai/', views.forest_notes, name='forest_notes'),
   path('zemelapis/', views.mapPage, name="map"),
   path('tikrinimai/<int:id>/', views.orders, name="orders"),
   path('tikrinimai/<int:forest_id>/<int:order_id>/tikrinimas/', views.order, name="order"),

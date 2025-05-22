@@ -18,7 +18,7 @@ import re
 from .forms import CreateUserForm, CustomPasswordChangeForm
 from .decorators import unauthenticated_user
 from .decorators import allowed_users
-from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto, Subscription,Payment
+from .models import Forest, Forest_image, Order, Forest_document, AnalyzedPhoto, Subscription,Payment, ForestNote
 
 import json
 
@@ -713,6 +713,38 @@ def worker_completed_orders(request):
         'completed_orders': completed_orders,
     }
     return render(request, "miskoris_app/worker_completed_orders.html", context)
+
+
+@login_required(login_url='login')
+@allowed_users(allowed_roles=['admin', 'customer'])
+def forest_notes(request, id):
+    forest = get_object_or_404(Forest, id=id, user=request.user)
+    notes = forest.notes.all().order_by('-created_at')
+    
+    if request.method == 'POST':
+        if 'add_note' in request.POST:
+            note_text = request.POST.get('note')
+            if note_text:
+                ForestNote.objects.create(forest=forest, note=note_text)
+                messages.success(request, 'Užrašas pridėtas sėkmingai!')
+            else:
+                messages.error(request, 'Užrašas negali būti tuščias.')
+        elif 'delete_note' in request.POST:
+            note_id = request.POST.get('note_id')
+            try:
+                note = forest.notes.get(id=note_id)
+                note.delete()
+                messages.success(request, 'Užrašas ištrintas sėkmingai!')
+            except ForestNote.DoesNotExist:
+                messages.error(request, 'Užrašas nerastas.')
+        
+        return redirect('forest_notes', id=forest.id)
+    
+    context = {
+        'forest': forest,
+        'notes': notes,
+    }
+    return render(request, 'miskoris_app/forest_notes.html', context)
 
 # Initialize DeepForest model
 model = main.deepforest()
