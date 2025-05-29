@@ -750,35 +750,20 @@ def forest_notes(request, id):
 model = main.deepforest()
 model.use_release()
 
-def is_dry_tree(image, xmin, ymin, xmax, ymax):
 
-    roi = image[ymin:ymax, xmin:xmax]
-    if roi.size == 0:
-        return False
+def is_dry_tree(mean_g, green_percentage, mean_r, mean_b, mean_saturation, mean_value, max_mean_g, max_green_pct):
+    # Adaptive conditions based on max values among detected trees
+    is_not_too_green = mean_g < 1.1 * max_mean_g  # Relaxed to allow higher mean_g
+    is_low_green = green_percentage < 0.3 * max_green_pct or green_percentage < 15  # Relaxed to allow more green
     
-    roi_hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
-    roi_rgb = roi
+    # Retain existing conditions for additional robustness
+    is_brownish = mean_r > mean_g and mean_r > mean_b and mean_r > 65  # Lowered mean_r threshold
+    is_mixed = (mean_r > mean_g) and (mean_r - mean_g < 50) and (mean_g > 50)  # Relaxed margin and mean_g
+    is_reasonable_saturation = mean_saturation < 95  # Increased saturation limit
+    is_reasonable_brightness = 20 < mean_value < 240  # Relaxed brightness range
     
-    mean_saturation = np.mean(roi_hsv[:,:,1])
-    mean_value = np.mean(roi_hsv[:,:,2])
-    mean_r = np.mean(roi_rgb[:,:,0])
-    mean_g = np.mean(roi_rgb[:,:,1])
-    mean_b = np.mean(roi_rgb[:,:,2])
-    
-    green_lower = np.array([42, 25, 25])
-    green_upper = np.array([125, 255, 255])
-    green_mask = cv2.inRange(roi_hsv, green_lower, green_upper)
-    total_pixels = roi.shape[0] * roi.shape[1]
-    green_percentage = (np.sum(green_mask > 0) / total_pixels) * 100 if total_pixels > 0 else 0
-    
-    is_not_too_green = mean_g < mean_r or mean_g < mean_b or mean_g < 145
-    is_brownish = mean_r > mean_g and mean_r > mean_b and mean_r > 55
-    is_mixed = (mean_r > mean_g) and (mean_r - mean_g < 50) and (mean_g > 35)
-    is_reasonable_saturation = mean_saturation < 75
-    is_reasonable_brightness = 30 < mean_value < 180
-    is_low_green = green_percentage < 10
-    
-    return (is_not_too_green and (is_brownish or is_mixed) and is_low_green and
+    # Combine adaptive and existing conditions
+    return (is_not_too_green and is_low_green and (is_brownish or is_mixed) and
             is_reasonable_saturation and is_reasonable_brightness)
 
 def analyze_images(images):
@@ -790,26 +775,76 @@ def analyze_images(images):
             img_resized = img.resize((500, 500), Image.Resampling.LANCZOS)
             image_array = np.array(img_resized)
             predictions = model.predict_image(image=image_array, return_plot=False)
+            
             if predictions is not None and not predictions.empty:
                 predictions = predictions[predictions["score"] > 0.1]
-            print(f"Image ID {forest_image.id}: Detected {len(predictions)} trees")
-            if predictions is not None and not predictions.empty:
-                dry_tree_count = 0
+                print(f"Image ID {forest_image.id}: Detected {len(predictions)} trees")
+                
+                # Step 1: Collect statistics for all detected trees
+                tree_stats = []
                 for _, row in predictions.iterrows():
                     xmin, ymin, xmax, ymax = map(int, [row["xmin"], row["ymin"], row["xmax"], row["ymax"]])
-                    score = row["score"]
-                    is_dry = is_dry_tree(image_array, xmin, ymin, xmax, ymax)
+                    roi = image_array[ymin:ymax, xmin:xmax]
+                    if roi.size == 0:
+                        continue
+                    
+                    roi_hsv = cv2.cvtColor(roi, cv2.COLOR_RGB2HSV)
+                    mean_saturation = np.mean(roi_hsv[:,:,1])
+                    mean_value = np.mean(roi_hsv[:,:,2])
+                    mean_r = np.mean(roi[:,:,0])
+                    mean_g = np.mean(roi[:,:,1])
+                    mean_b = np.mean(roi[:,:,2])
+                    
+                    green_lower = np.array([42, 25, 25])
+                    green_upper = np.array([125, 255, 255])
+                    green_mask = cv2.inRange(roi_hsv, green_lower, green_upper)
+                    total_pixels = roi.shape[0] * roi.shape[1]
+                    green_percentage = (np.sum(green_mask > 0) / total_pixels) * 100 if total_pixels > 0 else 0
+                    
+                    tree_stats.append({
+                        'mean_g': mean_g,
+                        'green_percentage': green_percentage,
+                        'mean_saturation': mean_saturation,
+                        'mean_value': mean_value,
+                        'mean_r': mean_r,
+                        'mean_b': mean_b,
+                        'xmin': xmin,
+                        'ymin': ymin,
+                        'xmax': xmax,
+                        'ymax': ymax,
+                        'score': row["score"]
+                    })
+                
+                # Step 2: Compute maximum values for adaptive thresholds
+                if tree_stats:
+                    max_mean_g = max(ts['mean_g'] for ts in tree_stats)
+                    max_green_pct = max(ts['green_percentage'] for ts in tree_stats)
+                else:
+                    max_mean_g = 255  # Default if no trees detected
+                    max_green_pct = 100
+                
+                # Step 3: Classify trees and draw bounding boxes
+                dry_tree_count = 0
+                for ts in tree_stats:
+                    is_dry = is_dry_tree(
+                        ts['mean_g'], ts['green_percentage'], ts['mean_r'], ts['mean_b'],
+                        ts['mean_saturation'], ts['mean_value'], max_mean_g, max_green_pct
+                    )
                     label = "Sausas medis" if is_dry else "Medis"
                     color = (139, 69, 19) if is_dry else (0, 255, 0)
                     outer_color = (100, 50, 10) if is_dry else (0, 200, 0)
-                    cv2.rectangle(image_array, (xmin, ymin), (xmax, ymax), color, 2)
-                    cv2.rectangle(image_array, (xmin-2, ymin-2), (xmax+2, ymax+2), outer_color, 1)
-                    text = f"{label} ({score:.2f})"
+                    
+                    # Draw bounding box
+                    cv2.rectangle(image_array, (ts['xmin'], ts['ymin']), (ts['xmax'], ts['ymax']), color, 2)
+                    cv2.rectangle(image_array, (ts['xmin']-2, ts['ymin']-2), (ts['xmax']+2, ts['ymax']+2), outer_color, 1)
+                    
+                    # Draw label with score
+                    text = f"{label} ({ts['score']:.2f})"
                     font = cv2.FONT_HERSHEY_SIMPLEX
                     font_scale = 0.4
                     text_size, _ = cv2.getTextSize(text, font, font_scale, 1)
                     text_w, text_h = text_size
-                    bg_x, bg_y = xmin, ymin - text_h - 6
+                    bg_x, bg_y = ts['xmin'], ts['ymin'] - text_h - 6
                     bg_x2, bg_y2 = bg_x + text_w + 2, bg_y + text_h + 2
                     overlay = image_array.copy()
                     cv2.rectangle(overlay, (bg_x, bg_y), (bg_x2, bg_y2), color, -1)
@@ -817,11 +852,15 @@ def analyze_images(images):
                     cv2.addWeighted(overlay, alpha, image_array, 1 - alpha, 0, image_array)
                     cv2.putText(image_array, text, (bg_x + 1, bg_y + text_h), font,
                                font_scale, (255, 255, 255), 1, cv2.LINE_AA)
+                    
                     if is_dry:
                         dry_tree_count += 1
+                
                 analysis_result = f"Surasta {len(predictions)} medžių, {dry_tree_count} sausų medžių"
             else:
                 analysis_result = "Medžių nerasta"
+            
+            # Save the analyzed image
             _, buffer = cv2.imencode('.png', cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR))
             analyzed_photo = AnalyzedPhoto(
                 forest=forest_image.forest,
@@ -832,7 +871,7 @@ def analyze_images(images):
             analyzed_photo.save()
         except Exception as e:
             print(f"Error processing image ID {forest_image.id}: {str(e)}")
-
+            
 def analyze_single_forest(forest):
     unanalyzed_images = Forest_image.objects.filter(forest=forest, analyzed_versions__isnull=True) 
     analyze_images(unanalyzed_images)
